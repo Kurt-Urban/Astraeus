@@ -27,7 +27,7 @@ class Ship(pygame.sprite.Sprite):
         self.screen_wrap()
 
         self.position += self.velocity
-
+        self.velocity *= 0.985
         self.rect.center = (round(self.position[0]), round(self.position[1]))
 
     def foward(self):
