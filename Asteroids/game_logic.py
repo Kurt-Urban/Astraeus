@@ -1,5 +1,6 @@
 import pygame
 from .objects.ship import Ship
+from .objects.asteroid import Asteroid
 
 
 class AsteroidsGame:
@@ -9,7 +10,7 @@ class AsteroidsGame:
         self.fps = 60
         self.screen_size = 800
         self.screen = pygame.display.set_mode([self.screen_size, self.screen_size])
-        pygame.display.set_caption("Astroids")
+        pygame.display.set_caption("Asteroids")
 
         # Initialize Ship
         self.ship = Ship(400, self.screen)
@@ -18,6 +19,11 @@ class AsteroidsGame:
 
         # Initialize Projectile Group
         self.projectile_group = pygame.sprite.Group()
+
+        # Initialize Asteroids Group
+        self.asteroids_group = pygame.sprite.Group()
+        self.asteroid = Asteroid(self.screen, 75)
+        self.asteroids_group.add(self.asteroid)
 
     def update(self) -> None:
         # Display logic
@@ -32,6 +38,9 @@ class AsteroidsGame:
 
         self.projectile_group.update()
 
+        # Asteroid logic
+        self.asteroids_group.update()
+
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -45,9 +54,6 @@ class AsteroidsGame:
 
         # Draw Ship
         self.ship_group.draw(self.screen)
-
-        # Draw Projectiles
-        # self.projectile_group.draw(self.screen)
 
     def run(self, running) -> None:
         while running:

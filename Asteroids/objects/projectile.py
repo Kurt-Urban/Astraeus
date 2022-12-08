@@ -1,4 +1,5 @@
 import pygame
+from Asteroids.utils.object_functions import movement, screen_wrap
 
 
 class Projectile(pygame.sprite.Sprite):
@@ -22,8 +23,5 @@ class Projectile(pygame.sprite.Sprite):
 
         self.screen.blit(self.image, self.position)
 
-        self.velocity.from_polar((self.speed, self.heading + 270))
-
-        self.position += self.velocity
-
-        self.center = (round(self.position[0]), round(self.position[1]))
+        movement(self)
+        screen_wrap(self)

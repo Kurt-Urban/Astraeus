@@ -1,5 +1,6 @@
 import pygame
 from .projectile import Projectile
+from Asteroids.utils.object_functions import movement, screen_wrap
 
 
 class Ship(pygame.sprite.Sprite):
@@ -29,9 +30,9 @@ class Ship(pygame.sprite.Sprite):
         else:
             self.speed = 0
 
-        self.position += self.velocity
-        self.velocity *= 0.985
-        self.rect.center = (round(self.position[0]), round(self.position[1]))
+        movement(self, acceleration=0.985)
+        screen_wrap(self)
+        self.get_key_press()
 
         # Shooting Logic
         if self.shot == True and self.shooting_delay != 0:
@@ -40,14 +41,10 @@ class Ship(pygame.sprite.Sprite):
             self.shooting_delay = self.shooting_delay_default
             self.shot = False
 
-        self.get_key_press()
-        self.screen_wrap()
-
     def foward(self):
         self.speed += 0.3
         if self.speed >= self.top_speed:
             self.speed = self.top_speed
-        self.velocity.from_polar((self.speed, self.heading + 270))
 
     def rotate(self, angle):
         if self.heading >= 360:
@@ -58,16 +55,6 @@ class Ship(pygame.sprite.Sprite):
         self.heading += angle
         self.image = pygame.transform.rotate(self.rotated, -self.heading)
         self.rect = self.image.get_rect(center=self.rect.center)
-
-    def screen_wrap(self):
-        if self.position.x > 800:
-            self.position.x = 0
-        if self.position.x < 0:
-            self.position.x = 800
-        if self.position.y <= 0:
-            self.position.y = 800
-        if self.position.y > 800:
-            self.position.y = 0
 
     def get_key_press(self):
         keys = pygame.key.get_pressed()
