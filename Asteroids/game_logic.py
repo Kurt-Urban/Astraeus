@@ -25,7 +25,7 @@ class AsteroidsGame:
 
         # Initialize Asteroids Group
         self.asteroids_group = pygame.sprite.Group()
-        self.asteroid = Asteroid(self.screen, 100)
+        self.asteroid = Asteroid(self.screen, "lg")
         self.asteroids_group.add(self.asteroid)
 
         # Game Variables
@@ -51,6 +51,7 @@ class AsteroidsGame:
 
         # Asteroid logic
         self.asteroids_group.update()
+        self.split_asteroid()
 
         # Collision logic
         self.life_lost()
@@ -70,9 +71,7 @@ class AsteroidsGame:
         if self.draw_ship:
             self.ship_group.draw(self.screen)
 
-        self.draw_text(
-            str(f"Lives: {self.lives}"), "WHITE", int(self.screen_size / 2), 20
-        )
+        self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
 
     def run(self) -> None:
         while self.game_over == False:
@@ -102,6 +101,18 @@ class AsteroidsGame:
             # Indicate invincibility
             if self.reset_timer in [10, 30, 50, 70, 90, 110, 130, 150]:
                 self.draw_ship = not self.draw_ship
+
+    def split_asteroid(self):
+        shot_asteroid = pygame.sprite.groupcollide(
+            self.asteroids_group, self.projectile_group, False, False
+        )
+        if shot_asteroid:
+            pygame.sprite.groupcollide(
+                self.asteroids_group, self.projectile_group, True, True
+            )
+            asteroid, _ = shot_asteroid.popitem()
+            if asteroid.size == "lg" or asteroid.size == "md":
+                self.asteroids_group.add(asteroid.split(asteroid.rect.center))
 
     def draw_text(self, text, text_color, x, y):
         img = self.font.render(text, True, text_color)
