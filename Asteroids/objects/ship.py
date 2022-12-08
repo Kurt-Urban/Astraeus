@@ -18,7 +18,8 @@ class Ship(pygame.sprite.Sprite):
         self.velocity = pygame.math.Vector2(self.speed, 0)
         self.position = pygame.math.Vector2(xy, xy)
         self.shot = False
-        self.shooting_delay = 10
+        self.shooting_delay_default = 15
+        self.shooting_delay = self.shooting_delay_default
 
     def update(self):
         # Movement Logic
@@ -36,7 +37,7 @@ class Ship(pygame.sprite.Sprite):
         if self.shot == True and self.shooting_delay != 0:
             self.shooting_delay -= 1
         else:
-            self.shooting_delay = 10
+            self.shooting_delay = self.shooting_delay_default
             self.shot = False
 
         self.get_key_press()

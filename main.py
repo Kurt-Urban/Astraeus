@@ -1,4 +1,4 @@
-from Asteroids import asteroids as ast
+from Asteroids import game_logic as ast
 
 game = ast.AsteroidsGame()
 game.run(True)
