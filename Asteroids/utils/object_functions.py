@@ -14,7 +14,7 @@ def screen_wrap(self, **kwargs):
     top = 800
     btm = 0
 
-    if kwargs.get("asteroid") == True:
+    if kwargs.get("asteroid"):
         top = 830
         btm = -30
 

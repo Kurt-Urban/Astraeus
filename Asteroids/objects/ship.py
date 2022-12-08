@@ -35,7 +35,7 @@ class Ship(pygame.sprite.Sprite):
         self.get_key_press()
 
         # Shooting Logic
-        if self.shot == True and self.shooting_delay != 0:
+        if self.shot and self.shooting_delay != 0:
             self.shooting_delay -= 1
         else:
             self.shooting_delay = self.shooting_delay_default
@@ -58,14 +58,22 @@ class Ship(pygame.sprite.Sprite):
 
     def get_key_press(self):
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_w] == True:
+        if keys[pygame.K_w]:
             self.foward()
-        if keys[pygame.K_a] == True:
+        if keys[pygame.K_a]:
             self.rotate(-self.rotate_speed)
-        if keys[pygame.K_d] == True:
+        if keys[pygame.K_d]:
             self.rotate(self.rotate_speed)
-        if keys[pygame.K_SPACE] == True:
+        if keys[pygame.K_SPACE]:
             self.shot = True
 
     def shoot(self) -> Projectile:
         return Projectile(self.position, self.heading, self.screen)
+
+    def reset(self):
+        self.speed = 0
+        self.heading = 0
+        self.position = pygame.math.Vector2(400, 400)
+        self.rect.center = (400, 400)
+        self.image = pygame.transform.rotate(self.rotated, -self.heading)
+        self.rect = self.image.get_rect(center=self.rect.center)
