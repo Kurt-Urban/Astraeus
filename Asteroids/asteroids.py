@@ -1,5 +1,5 @@
 import pygame
-from ship import Ship
+from .objects.ship import Ship
 
 
 class AsteroidsGame:
@@ -12,9 +12,12 @@ class AsteroidsGame:
         pygame.display.set_caption("Astroids")
 
         # Initialize Ship
-        self.ship = Ship(400)
+        self.ship = Ship(400, self.screen)
         self.ship_group = pygame.sprite.Group()
         self.ship_group.add(self.ship)
+
+        # Initialize Projectile Group
+        self.projectile_group = pygame.sprite.Group()
 
     def update(self) -> None:
         # Display logic
@@ -23,16 +26,18 @@ class AsteroidsGame:
         # Ship logic
         self.ship_group.update()
 
+        # Projectile logic
+        if self.ship.shot == True and self.ship.shooting_delay == 10:
+            self.projectile_group.add(self.ship.shoot())
+
+        self.projectile_group.update()
+
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
 
         pygame.display.update()
-
-    def run(self, running) -> None:
-        while running:
-            self.update()
 
     def draw(self) -> None:
         self.clock.tick(self.fps)
@@ -41,12 +46,9 @@ class AsteroidsGame:
         # Draw Ship
         self.ship_group.draw(self.screen)
 
-    def astroids(self) -> None:
-        pass
+        # Draw Projectiles
+        # self.projectile_group.draw(self.screen)
 
-    def ship(self) -> None:
-        pass
-
-
-game = AsteroidsGame()
-game.run(True)
+    def run(self, running) -> None:
+        while running:
+            self.update()

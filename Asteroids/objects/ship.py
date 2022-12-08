@@ -1,39 +1,51 @@
 import pygame
-import math
+from .projectile import Projectile
 
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, xy):
+    def __init__(self, xy, screen):
         pygame.sprite.Sprite.__init__(self)
         self.image = pygame.image.load("assets/ship.png")
         self.image = pygame.transform.scale(self.image, (35, 35))
+        self.screen = screen
         self.rotated = self.image
         self.rect = self.image.get_rect()
         self.rect.center = (xy, xy)
         self.rotate_speed = 4
+        self.top_speed = 4
         self.speed = 0
         self.heading = 0
         self.velocity = pygame.math.Vector2(self.speed, 0)
         self.position = pygame.math.Vector2(xy, xy)
+        self.shot = False
+        self.shooting_delay = 10
 
     def update(self):
+        # Movement Logic
         # Decelerate
         if self.speed > 0.1:
             self.speed *= 0.98
         else:
             self.speed = 0
 
-        self.get_key_press()
-        self.screen_wrap()
-
         self.position += self.velocity
         self.velocity *= 0.985
         self.rect.center = (round(self.position[0]), round(self.position[1]))
 
+        # Shooting Logic
+        if self.shot == True and self.shooting_delay != 0:
+            self.shooting_delay -= 1
+        else:
+            self.shooting_delay = 10
+            self.shot = False
+
+        self.get_key_press()
+        self.screen_wrap()
+
     def foward(self):
-        self.speed += 0.5
-        if self.speed >= 5:
-            self.speed = 5
+        self.speed += 0.3
+        if self.speed >= self.top_speed:
+            self.speed = self.top_speed
         self.velocity.from_polar((self.speed, self.heading + 270))
 
     def rotate(self, angle):
@@ -64,3 +76,8 @@ class Ship(pygame.sprite.Sprite):
             self.rotate(-self.rotate_speed)
         if keys[pygame.K_d] == True:
             self.rotate(self.rotate_speed)
+        if keys[pygame.K_SPACE] == True:
+            self.shot = True
+
+    def shoot(self) -> Projectile:
+        return Projectile(self.position, self.heading, self.screen)
