@@ -1,6 +1,6 @@
 def movement(self, **kwargs):
-
-    self.velocity.from_polar((self.speed, self.heading + 270))
+    if kwargs.get("ship") is None:
+        self.velocity.from_polar((self.speed, self.heading + 270))
 
     self.position += self.velocity
 

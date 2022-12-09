@@ -11,8 +11,8 @@ class Projectile(pygame.sprite.Sprite):
         self.rect = self.image.get_rect(center=self.center)
         self.screen = screen
         self.heading = heading
-        self.speed = 12
-        self.life = 35
+        self.speed = 15
+        self.life = 30
         self.velocity = pygame.math.Vector2(self.speed, 0)
         self.position = pygame.math.Vector2(pos[0], pos[1])
 

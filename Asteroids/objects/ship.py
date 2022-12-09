@@ -12,14 +12,14 @@ class Ship(pygame.sprite.Sprite):
         self.rotated = self.image
         self.rect = self.image.get_rect()
         self.rect.center = (xy, xy)
-        self.rotate_speed = 4
+        self.rotate_speed = 6
         self.top_speed = 4
         self.speed = 0
         self.heading = 0
         self.velocity = pygame.math.Vector2(self.speed, 0)
         self.position = pygame.math.Vector2(xy, xy)
         self.shot = False
-        self.shooting_delay_default = 15
+        self.shooting_delay_default = 20
         self.shooting_delay = self.shooting_delay_default
 
     def update(self):
@@ -30,21 +30,19 @@ class Ship(pygame.sprite.Sprite):
         else:
             self.speed = 0
 
-        movement(self, acceleration=0.985)
+        movement(self, acceleration=0.985, ship=True)
         screen_wrap(self)
         self.get_key_press()
 
         # Shooting Logic
         if self.shot and self.shooting_delay != 0:
             self.shooting_delay -= 1
-        else:
-            self.shooting_delay = self.shooting_delay_default
-            self.shot = False
 
     def foward(self):
         self.speed += 0.3
         if self.speed >= self.top_speed:
             self.speed = self.top_speed
+        self.velocity.from_polar((self.speed, self.heading + 270))
 
     def rotate(self, angle):
         if self.heading >= 360:
@@ -64,8 +62,16 @@ class Ship(pygame.sprite.Sprite):
             self.rotate(-self.rotate_speed)
         if keys[pygame.K_d]:
             self.rotate(self.rotate_speed)
+        # Shooting Keys Logic
         if keys[pygame.K_SPACE]:
-            self.shot = True
+            if (
+                self.shooting_delay == self.shooting_delay_default
+                and self.shot == False
+            ):
+                self.shot = True
+        if keys[pygame.K_SPACE] == False:
+            self.shot = False
+            self.shooting_delay = self.shooting_delay_default
 
     def shoot(self) -> Projectile:
         return Projectile(self.position, self.heading, self.screen)

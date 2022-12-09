@@ -12,6 +12,8 @@ class Asteroid(pygame.sprite.Sprite):
         size_dict = {"lg": 120, "md": 80, "sm": 50}
         size_px = size_dict[size]
 
+        speed_dict = {"lg": [0.5, 1], "md": [1.5, 2], "sm": [2.5, 3]}
+
         # Generate starting location
         x = random.randint(-100, 900)
         y = 0
@@ -28,7 +30,7 @@ class Asteroid(pygame.sprite.Sprite):
         self.rotated_img = self.image
         self.rect = self.image.get_rect()
         self.rect.center = (x, y)
-        self.speed = random.randint(1, 3)
+        self.speed = random.choice(speed_dict[size])
         self.heading = random.randint(-360, 360)
         self.img_heading = random.randint(-360, 360)
 

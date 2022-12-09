@@ -25,16 +25,18 @@ class AsteroidsGame:
 
         # Initialize Asteroids Group
         self.asteroids_group = pygame.sprite.Group()
-        self.asteroid = Asteroid(self.screen, "lg")
-        self.asteroids_group.add(self.asteroid)
 
         # Game Variables
+        self.score = 0
+        self.round = 1
         self.lives = 3
         self.resetting = False
         self.reset_timer_default = 150
         self.reset_timer = self.reset_timer_default
         self.game_over = False
         self.draw_ship = True
+
+        self.start_round()
 
     def update(self) -> None:
         # Display logic
@@ -44,7 +46,10 @@ class AsteroidsGame:
         self.ship_group.update()
 
         # Projectile logic
-        if self.ship.shot and self.ship.shooting_delay == 10:
+        if (
+            self.ship.shot
+            and self.ship.shooting_delay == self.ship.shooting_delay_default - 1
+        ):
             self.projectile_group.add(self.ship.shoot())
 
         self.projectile_group.update()
@@ -63,20 +68,7 @@ class AsteroidsGame:
 
         pygame.display.update()
 
-    def draw(self) -> None:
-        self.clock.tick(self.fps)
-        self.screen.fill((0, 0, 0))
-
-        # Draw Ship
-        if self.draw_ship:
-            self.ship_group.draw(self.screen)
-
-        self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
-
-    def run(self) -> None:
-        while self.game_over == False:
-            self.update()
-
+    # Main game logic functions
     def life_lost(self) -> None:
         if (
             pygame.sprite.groupcollide(
@@ -110,10 +102,33 @@ class AsteroidsGame:
             pygame.sprite.groupcollide(
                 self.asteroids_group, self.projectile_group, True, True
             )
+            self.score += 1
             asteroid, _ = shot_asteroid.popitem()
             if asteroid.size == "lg" or asteroid.size == "md":
                 self.asteroids_group.add(asteroid.split(asteroid.rect.center))
 
+    def start_round(self):
+        asteroids = []
+        if self.round == 1:
+            for _ in range(4):
+                asteroids.append(Asteroid(self.screen, "lg"))
+        self.asteroids_group.add(asteroids)
+
+    # Ancillary functions
     def draw_text(self, text, text_color, x, y):
         img = self.font.render(text, True, text_color)
         self.screen.blit(img, (x, y))
+
+    def draw(self) -> None:
+        self.clock.tick(self.fps)
+        self.screen.fill((0, 0, 0))
+
+        # Draw Ship
+        if self.draw_ship:
+            self.ship_group.draw(self.screen)
+
+        self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
+
+    def run(self) -> None:
+        while self.game_over == False:
+            self.update()
