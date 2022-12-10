@@ -27,7 +27,9 @@ class AsteroidsGame:
         self.asteroids_group = pygame.sprite.Group()
 
         # Game Variables
-        self.score = 0
+        self.destroyed_asteroids = 0
+        self.current_score = 0
+        self.round_scores = []
         self.round = 1
         self.lives = 3
         self.resetting = False
@@ -35,6 +37,8 @@ class AsteroidsGame:
         self.reset_timer = self.reset_timer_default
         self.game_over = False
         self.draw_ship = True
+        self.round_timer_default = 7500
+        self.round_timer = self.round_timer_default
 
         self.start_round()
 
@@ -60,6 +64,8 @@ class AsteroidsGame:
 
         # Collision logic
         self.life_lost()
+
+        self.get_score()
 
         # Event handling
         for event in pygame.event.get():
@@ -102,7 +108,7 @@ class AsteroidsGame:
             pygame.sprite.groupcollide(
                 self.asteroids_group, self.projectile_group, True, True
             )
-            self.score += 1
+            self.destroyed_asteroids += 1
             asteroid, _ = shot_asteroid.popitem()
             if asteroid.size == "lg" or asteroid.size == "md":
                 self.asteroids_group.add(asteroid.split(asteroid.rect.center))
@@ -112,6 +118,10 @@ class AsteroidsGame:
         if self.round == 1:
             for _ in range(4):
                 asteroids.append(Asteroid(self.screen, "lg"))
+        else:
+            self.round_timer = self.round_timer_default
+            self.round_scores.append(self.get_score())
+
         self.asteroids_group.add(asteroids)
 
     # Ancillary functions
@@ -128,7 +138,15 @@ class AsteroidsGame:
             self.ship_group.draw(self.screen)
 
         self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
+        self.draw_text(str(f"Score: {self.get_score()}"), "WHITE", 600, 20)
 
     def run(self) -> None:
         while self.game_over == False:
             self.update()
+
+    def get_score(self):
+        if self.round_timer > 1 and len(self.asteroids_group) != 0:
+            self.round_timer -= 1
+
+        self.current_score = self.destroyed_asteroids * self.round_timer
+        return self.current_score
