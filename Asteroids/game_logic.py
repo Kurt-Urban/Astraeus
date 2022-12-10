@@ -40,7 +40,7 @@ class AsteroidsGame:
         self.round_timer_default = 7500
         self.round_timer = self.round_timer_default
 
-        self.start_round()
+        self.start_asteroids_round()
 
     def update(self) -> None:
         # Display logic
@@ -65,7 +65,12 @@ class AsteroidsGame:
         # Collision logic
         self.life_lost()
 
-        self.get_score()
+        self.get_current_score()
+
+        # Round logic
+        if len(self.asteroids_group) == 0:
+            self.round += 1
+            self.start_asteroids_round()
 
         # Event handling
         for event in pygame.event.get():
@@ -86,9 +91,10 @@ class AsteroidsGame:
                 self.resetting = True
                 self.lives -= 1
                 self.ship.reset()
+                self.current_score = self.current_score * 0.75
             else:
                 self.game_over = True
-                print("Game Over")
+                print(f"Game Over\n" f"Final Score: {self.get_total_score()}\n")
 
         # Gives invincibility frames
         if self.resetting:
@@ -113,14 +119,17 @@ class AsteroidsGame:
             if asteroid.size == "lg" or asteroid.size == "md":
                 self.asteroids_group.add(asteroid.split(asteroid.rect.center))
 
-    def start_round(self):
+    def start_asteroids_round(self):
         asteroids = []
-        if self.round == 1:
-            for _ in range(4):
-                asteroids.append(Asteroid(self.screen, "lg"))
-        else:
-            self.round_timer = self.round_timer_default
-            self.round_scores.append(self.get_score())
+        for _ in range(self.round):
+            asteroids.append(Asteroid(self.screen, "lg"))
+
+        self.round_timer = self.round_timer_default
+
+        if self.round != 1:
+            self.current_score = 0
+            self.round_scores.append(self.get_current_score())
+            self.destroyed_asteroids = 0
 
         self.asteroids_group.add(asteroids)
 
@@ -138,15 +147,18 @@ class AsteroidsGame:
             self.ship_group.draw(self.screen)
 
         self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
-        self.draw_text(str(f"Score: {self.get_score()}"), "WHITE", 600, 20)
+        self.draw_text(str(f"Score: {self.get_current_score()}"), "WHITE", 600, 20)
 
     def run(self) -> None:
         while self.game_over == False:
             self.update()
 
-    def get_score(self):
+    def get_current_score(self):
         if self.round_timer > 1 and len(self.asteroids_group) != 0:
             self.round_timer -= 1
 
         self.current_score = self.destroyed_asteroids * self.round_timer
         return self.current_score
+
+    def get_total_score(self):
+        return str(int(sum(self.round_scores) + self.current_score / 10))
