@@ -27,6 +27,7 @@ class AsteroidsGame:
         self.asteroids_group = pygame.sprite.Group()
 
         # Game Variables
+        self.total_destroyed_asteroids = 0
         self.destroyed_asteroids = 0
         self.current_score = 0
         self.round_scores = []
@@ -94,7 +95,10 @@ class AsteroidsGame:
                 self.current_score = self.current_score * 0.75
             else:
                 self.game_over = True
-                print(f"Game Over\n" f"Final Score: {self.get_total_score()}\n")
+                print(
+                    f"Final Score: {self.get_total_score()}\n"
+                    f"Destroyed Asteroids: {self.total_destroyed_asteroids}\n"
+                )
 
         # Gives invincibility frames
         if self.resetting:
@@ -115,13 +119,14 @@ class AsteroidsGame:
                 self.asteroids_group, self.projectile_group, True, True
             )
             self.destroyed_asteroids += 1
+            self.total_destroyed_asteroids += 1
             asteroid, _ = shot_asteroid.popitem()
             if asteroid.size == "lg" or asteroid.size == "md":
                 self.asteroids_group.add(asteroid.split(asteroid.rect.center))
 
     def start_asteroids_round(self):
         asteroids = []
-        for _ in range(self.round):
+        for _ in range(self.round + 3):
             asteroids.append(Asteroid(self.screen, "lg"))
 
         self.round_timer = self.round_timer_default
@@ -147,7 +152,6 @@ class AsteroidsGame:
             self.ship_group.draw(self.screen)
 
         self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
-        self.draw_text(str(f"Score: {self.get_current_score()}"), "WHITE", 600, 20)
 
     def run(self) -> None:
         while self.game_over == False:
@@ -161,4 +165,4 @@ class AsteroidsGame:
         return self.current_score
 
     def get_total_score(self):
-        return str(int(sum(self.round_scores) + self.current_score / 10))
+        return str(int(sum(self.round_scores) + self.current_score / 100))

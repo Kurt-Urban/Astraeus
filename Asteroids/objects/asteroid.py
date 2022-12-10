@@ -25,7 +25,7 @@ class Asteroid(pygame.sprite.Sprite):
 
         self.size = size
         self.screen = screen
-        self.image = pygame.image.load("assets/asteroid1.png")
+        self.image = pygame.image.load(f"assets/asteroid{random.randint(1,5)}.png")
         self.image = pygame.transform.scale(self.image, (size_px, size_px))
         self.rotated_img = self.image
         self.rect = self.image.get_rect()
