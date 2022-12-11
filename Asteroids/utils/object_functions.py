@@ -42,3 +42,7 @@ def off_screen() -> tuple:
         y = random.choice(y_choice)
 
     return x, y
+
+
+def get_dict_value(dict, key):
+    return next(v for k, v in dict.items() if key in k)

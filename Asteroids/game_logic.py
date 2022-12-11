@@ -1,5 +1,6 @@
 import pygame
 import random
+from .utils.object_functions import get_dict_value
 from .objects.ship import Ship
 from .objects.ufo import UFO
 from .objects.asteroid import Asteroid
@@ -49,6 +50,9 @@ class AsteroidsGame:
         self.draw_ship = True
         self.round_timer_default = 5000
         self.round_timer = self.round_timer_default
+        self.ufo_shoot_dict = {(1, 2, 3, 4): (150, 200), (5, 6, 7, 8): (100, 150)}
+        self.ufo_shoot_timer = 200
+        self.set_ufo_shoot_timer()
 
         self.start_asteroids_round()
 
@@ -80,7 +84,9 @@ class AsteroidsGame:
         # UFO logic
         # Shooting Percentage
         if len(self.ufo_group) > 0:
-            if random.randint(0, 100) <= 1:
+            self.ufo_shoot_timer -= 1
+            if self.ufo_shoot_timer == 0:
+                self.set_ufo_shoot_timer()
                 self.projectile_group.add(self.ufo_group.sprites()[0].shoot("sm"))
 
         # Round logic
@@ -185,3 +191,10 @@ class AsteroidsGame:
 
     def get_total_score(self):
         return str(int(sum(self.round_scores) + self.current_score / 100))
+
+    def set_ufo_shoot_timer(self):
+        if self.round < 9:
+            timer_options = get_dict_value(self.ufo_shoot_dict, self.round)
+            self.ufo_shoot_timer = random.randint(timer_options[0], timer_options[1])
+        else:
+            self.ufo_shoot_timer = random.randint(20, 80)
