@@ -1,3 +1,6 @@
+import random
+
+
 def movement(self, **kwargs):
     if kwargs.get("ship") is None:
         self.velocity.from_polar((self.speed, self.heading + 270))
@@ -26,3 +29,16 @@ def screen_wrap(self, **kwargs):
         self.position.y = top
     if self.position.y > top:
         self.position.y = btm
+
+
+def off_screen() -> tuple:
+    # Generate starting location
+    x = random.randint(-100, 900)
+    y = 0
+    if x < -20 or x > 820:
+        y = random.randint(0, 800)
+    else:
+        y_choice = random.randint(-100, -20), random.randint(820, 900)
+        y = random.choice(y_choice)
+
+    return x, y

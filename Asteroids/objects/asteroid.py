@@ -1,7 +1,7 @@
 import pygame
 import random
 from enum import Enum
-from Asteroids.utils.object_functions import movement, screen_wrap
+from Asteroids.utils.object_functions import movement, screen_wrap, off_screen
 
 
 class Asteroid(pygame.sprite.Sprite):
@@ -12,16 +12,9 @@ class Asteroid(pygame.sprite.Sprite):
         size_dict = {"lg": 120, "md": 80, "sm": 50}
         size_px = size_dict[size]
 
-        speed_dict = {"lg": [0.5, 1], "md": [1.5, 2], "sm": [2.5, 3]}
+        speed_dict = {"lg": [0.2, 0.5, 0.8], "md": [0.9, 1.2, 1.5], "sm": [1, 2, 3]}
 
-        # Generate starting location
-        x = random.randint(-100, 900)
-        y = 0
-        if x < -20 or x > 820:
-            y = random.randint(0, 800)
-        else:
-            y_choice = random.randint(-100, -20), random.randint(820, 900)
-            y = random.choice(y_choice)
+        x, y = off_screen()
 
         self.size = size
         self.screen = screen
@@ -66,14 +59,22 @@ class Asteroid(pygame.sprite.Sprite):
         if self.size == "lg":
             return [
                 Asteroid(self.screen, "md", pos=pos, heading=heading),
-                Asteroid(self.screen, "md", pos=pos, heading=heading + 120),
-                Asteroid(self.screen, "md", pos=pos, heading=heading + 240),
+                Asteroid(
+                    self.screen,
+                    "md",
+                    pos=pos,
+                    heading=heading + random.randint(90, 240),
+                ),
             ]
         elif self.size == "md":
             return [
                 Asteroid(self.screen, "sm", pos=pos, heading=heading),
-                Asteroid(self.screen, "sm", pos=pos, heading=heading + 120),
-                Asteroid(self.screen, "sm", pos=pos, heading=heading + 240),
+                Asteroid(
+                    self.screen,
+                    "sm",
+                    pos=pos,
+                    heading=heading + random.randint(90, 240),
+                ),
             ]
         else:
             return []

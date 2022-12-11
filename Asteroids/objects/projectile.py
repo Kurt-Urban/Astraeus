@@ -3,8 +3,9 @@ from Asteroids.utils.object_functions import movement, screen_wrap
 
 
 class Projectile(pygame.sprite.Sprite):
-    def __init__(self, pos, heading, screen):
+    def __init__(self, pos, heading, screen, ufo_shot):
         pygame.sprite.Sprite.__init__(self)
+        self.ufo_shot = ufo_shot
         self.image = pygame.image.load("assets/projectile.png")
         self.image = pygame.transform.scale(self.image, (5, 5))
         self.center = pos

@@ -74,7 +74,7 @@ class Ship(pygame.sprite.Sprite):
             self.shooting_delay = self.shooting_delay_default
 
     def shoot(self) -> Projectile:
-        return Projectile(self.position, self.heading, self.screen)
+        return Projectile(self.position, self.heading, self.screen, False)
 
     def reset(self):
         self.speed = 0

@@ -1,5 +1,7 @@
 import pygame
+import random
 from .objects.ship import Ship
+from .objects.ufo import UFO
 from .objects.asteroid import Asteroid
 
 
@@ -26,9 +28,16 @@ class AsteroidsGame:
         # Initialize Asteroids Group
         self.asteroids_group = pygame.sprite.Group()
 
+        # Initialize UFO Group
+        self.ufo_group = pygame.sprite.Group()
+        ufo = UFO(self.screen)
+        self.ufo_group.add(ufo)
+
         # Game Variables
         self.total_destroyed_asteroids = 0
         self.destroyed_asteroids = 0
+        self.total_destroyed_ufos = 0
+        self.destroyed_ufos = 0
         self.current_score = 0
         self.round_scores = []
         self.round = 1
@@ -38,7 +47,7 @@ class AsteroidsGame:
         self.reset_timer = self.reset_timer_default
         self.game_over = False
         self.draw_ship = True
-        self.round_timer_default = 7500
+        self.round_timer_default = 5000
         self.round_timer = self.round_timer_default
 
         self.start_asteroids_round()
@@ -47,8 +56,8 @@ class AsteroidsGame:
         # Display logic
         self.draw()
 
-        # Ship logic
         self.ship_group.update()
+        self.ufo_group.update()
 
         # Projectile logic
         if (
@@ -67,6 +76,12 @@ class AsteroidsGame:
         self.life_lost()
 
         self.get_current_score()
+
+        # UFO logic
+        # Shooting Percentage
+        if len(self.ufo_group) > 0:
+            if random.randint(0, 100) <= 1:
+                self.projectile_group.add(self.ufo_group.sprites()[0].shoot("sm"))
 
         # Round logic
         if len(self.asteroids_group) == 0:
@@ -114,15 +129,17 @@ class AsteroidsGame:
         shot_asteroid = pygame.sprite.groupcollide(
             self.asteroids_group, self.projectile_group, False, False
         )
+
         if shot_asteroid:
-            pygame.sprite.groupcollide(
-                self.asteroids_group, self.projectile_group, True, True
-            )
-            self.destroyed_asteroids += 1
-            self.total_destroyed_asteroids += 1
-            asteroid, _ = shot_asteroid.popitem()
-            if asteroid.size == "lg" or asteroid.size == "md":
-                self.asteroids_group.add(asteroid.split(asteroid.rect.center))
+            asteroid, projectile = shot_asteroid.popitem()
+            if not projectile[0].ufo_shot:
+                pygame.sprite.groupcollide(
+                    self.asteroids_group, self.projectile_group, True, True
+                )
+                self.destroyed_asteroids += 1
+                self.total_destroyed_asteroids += 1
+                if asteroid.size == "lg" or asteroid.size == "md":
+                    self.asteroids_group.add(asteroid.split(asteroid.rect.center))
 
     def start_asteroids_round(self):
         asteroids = []
@@ -146,6 +163,8 @@ class AsteroidsGame:
     def draw(self) -> None:
         self.clock.tick(self.fps)
         self.screen.fill((0, 0, 0))
+
+        self.ufo_group.draw(self.screen)
 
         # Draw Ship
         if self.draw_ship:
