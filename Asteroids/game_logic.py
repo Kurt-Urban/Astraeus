@@ -37,11 +37,11 @@ class AsteroidsGame:
         self.total_destroyed_asteroids = 0
         self.destroyed_asteroids = 0
         self.total_destroyed_ufos = 0
-        self.destroyed_ufos = 0
+        self.spawned_ufos = 0
         self.current_score = 0
         self.round_scores = []
         self.round = 1
-        self.lives = 3
+        self.lives = 100
         self.resetting = False
         self.reset_timer_default = 150
         self.reset_timer = self.reset_timer_default
@@ -49,7 +49,7 @@ class AsteroidsGame:
         self.draw_ship = True
         self.round_timer_default = 5000
         self.round_timer = self.round_timer_default
-        self.ufo_shoot_dict = {(1, 2, 3, 4): (15, 20), (5, 6, 7, 8): (100, 150)}
+        self.ufo_shoot_dict = {(1, 2, 3, 4): (150, 200), (5, 6, 7, 8): (100, 150)}
         self.ufo_shoot_timer = 200
         self.ufo_round_active = False
         self.set_ufo_shoot_timer()
@@ -84,7 +84,15 @@ class AsteroidsGame:
         self.get_current_score()
 
         # UFO logic
-        # Shooting Percentage
+        if (
+            self.round > 1
+            and self.spawned_ufos < self.round
+            and len(self.ufo_group) < self.round
+            and self.ufo_round_active == False
+        ):
+            random.randint(1, 2000) <= 1 and self.spawn_ufo()
+
+        # UFO Shooting Percentage
         if len(self.ufo_group) > 0:
             self.ufo_shoot_timer -= 1
             if self.ufo_shoot_timer == 0:
@@ -96,9 +104,16 @@ class AsteroidsGame:
 
         # Round logic
         if len(self.asteroids_group) == 0:
-            if len(self.ufo_group) == 0 and self.ufo_round_active == False:
+            if (
+                len(self.ufo_group) == 0
+                and self.ufo_round_active == False
+                and self.spawned_ufos < self.round
+            ):
+                self.ufo_round_active = True
                 self.spawn_ufo()
-            elif len(self.ufo_group) == 0 and self.ufo_round_active == True:
+            elif len(self.ufo_group) == 0 and (
+                self.ufo_round_active == True or self.spawned_ufos >= self.round
+            ):
                 self.round += 1
                 self.ufo_round_active = False
                 self.start_asteroids_round()
@@ -126,6 +141,7 @@ class AsteroidsGame:
                 self.game_over = True
                 print(
                     f"Final Score: {self.get_total_score()}\n"
+                    f"Destroyed UFOs: {self.total_destroyed_ufos}\n"
                     f"Destroyed Asteroids: {self.total_destroyed_asteroids}\n"
                 )
 
@@ -166,6 +182,7 @@ class AsteroidsGame:
             self.current_score = 0
             self.round_scores.append(self.get_current_score())
             self.destroyed_asteroids = 0
+            self.spawned_ufos = 0
 
         self.asteroids_group.add(asteroids)
 
@@ -179,6 +196,7 @@ class AsteroidsGame:
                 pygame.sprite.groupcollide(group, self.projectile_group, False, True)
                 return True
             if type == "ufo" and not projectile[0].ufo_shot:
+                self.total_destroyed_ufos += 1
                 pygame.sprite.groupcollide(group, self.projectile_group, True, True)
 
     def ship_hit_asteroid(self) -> bool:
@@ -228,5 +246,5 @@ class AsteroidsGame:
             self.ufo_shoot_timer = random.randint(20, 80)
 
     def spawn_ufo(self):
-        self.ufo_round_active = True
+        self.spawned_ufos += 1
         self.ufo_group.add(UFO(random.choice(["lg", "sm"]), self.screen))
