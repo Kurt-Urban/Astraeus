@@ -1,5 +1,6 @@
 import pygame
 import random
+from enum import Enum
 from .utils.object_functions import get_dict_value
 from .objects.ship import Ship
 from .objects.ufo import UFO
@@ -52,7 +53,7 @@ class AsteroidsGame:
         self.ufo_shoot_timer = 200
         self.set_ufo_shoot_timer()
 
-        self.start_asteroids_round()
+        # self.start_asteroids_round()
 
     def update(self) -> None:
         # Display logic
@@ -77,6 +78,8 @@ class AsteroidsGame:
         # Collision logic
         self.life_handler()
 
+        self.ship_shot(self.ufo_group, "ufo")
+
         self.get_current_score()
 
         # UFO logic
@@ -91,11 +94,12 @@ class AsteroidsGame:
                 self.projectile_group.add(ufo.shoot(player_pos=player_pos))
 
         # Round logic
-        # if len(self.asteroids_group) == 0:
-        # self.ufo_group.add(UFO(random.choice("lg", "sm"), self.screen))
-        # if len(self.ufo_group) == 0:
-        #     self.round += 1
-        #     self.start_asteroids_round()
+        if len(self.asteroids_group) == 0:
+            if len(self.ufo_group) == 0:
+                self.ufo_group.add(UFO(random.choice(["lg", "sm"]), self.screen))
+                self.round += 1
+            if len(self.ufo_group) == 0:
+                self.start_asteroids_round()
 
         # Event handling
         for event in pygame.event.get():
@@ -106,7 +110,7 @@ class AsteroidsGame:
 
     # Main game logic functions
     def life_handler(self) -> None:
-        if self.ship_hit_asteroid() or self.ship_shot():
+        if self.ship_hit_asteroid() or self.ship_shot(self.ship_group, "ship"):
             if self.lives > 0:
                 self.resetting = True
                 self.lives -= 1
@@ -159,17 +163,17 @@ class AsteroidsGame:
 
         self.asteroids_group.add(asteroids)
 
-    def ship_shot(self):
+    def ship_shot(self, group, type=Enum("type", ["ship", "ufo"])):
         projectile = pygame.sprite.groupcollide(
-            self.ship_group, self.projectile_group, False, False
+            group, self.projectile_group, False, False
         )
         if projectile:
             _, projectile = projectile.popitem()
-            if projectile[0].ufo_shot:
-                pygame.sprite.groupcollide(
-                    self.ship_group, self.projectile_group, False, True
-                )
+            if projectile[0].ufo_shot and type == "ship":
+                pygame.sprite.groupcollide(group, self.projectile_group, False, True)
                 return True
+            if type == "ufo" and not projectile[0].ufo_shot:
+                pygame.sprite.groupcollide(group, self.projectile_group, True, True)
 
     def ship_hit_asteroid(self) -> bool:
         return (
