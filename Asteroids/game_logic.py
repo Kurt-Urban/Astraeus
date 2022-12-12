@@ -41,7 +41,7 @@ class AsteroidsGame:
         self.current_score = 0
         self.round_scores = []
         self.round = 1
-        self.lives = 100
+        self.lives = 3
         self.resetting = False
         self.reset_timer_default = 150
         self.reset_timer = self.reset_timer_default
@@ -84,39 +84,10 @@ class AsteroidsGame:
         self.get_current_score()
 
         # UFO logic
-        if (
-            self.round > 1
-            and self.spawned_ufos < self.round
-            and len(self.ufo_group) < self.round
-            and self.ufo_round_active == False
-        ):
-            random.randint(1, 2000) <= 1 and self.spawn_ufo()
-
-        # UFO Shooting Percentage
-        if len(self.ufo_group) > 0:
-            self.ufo_shoot_timer -= 1
-            if self.ufo_shoot_timer == 0:
-                player_pos = self.ship_group.sprites()[0].position
-                ufo = self.ufo_group.sprites()[0]
-
-                self.set_ufo_shoot_timer()
-                self.projectile_group.add(ufo.shoot(player_pos=player_pos))
+        self.ufo_handler()
 
         # Round logic
-        if len(self.asteroids_group) == 0:
-            if (
-                len(self.ufo_group) == 0
-                and self.ufo_round_active == False
-                and self.spawned_ufos < self.round
-            ):
-                self.ufo_round_active = True
-                self.spawn_ufo()
-            elif len(self.ufo_group) == 0 and (
-                self.ufo_round_active == True or self.spawned_ufos >= self.round
-            ):
-                self.round += 1
-                self.ufo_round_active = False
-                self.start_asteroids_round()
+        self.round_handler()
 
         # Event handling
         for event in pygame.event.get():
@@ -128,7 +99,8 @@ class AsteroidsGame:
     # Main game logic functions
     def life_handler(self) -> None:
         if (
-            self.ship_hit_asteroid()
+            self.ship_hit_object(self.asteroids_group)
+            or self.ship_hit_object(self.ufo_group)
             or self.ship_shot(self.ship_group, "ship")
             and not self.resetting
         ):
@@ -199,13 +171,46 @@ class AsteroidsGame:
                 self.total_destroyed_ufos += 1
                 pygame.sprite.groupcollide(group, self.projectile_group, True, True)
 
-    def ship_hit_asteroid(self) -> bool:
+    def ship_hit_object(self, group) -> bool:
         return (
-            pygame.sprite.groupcollide(
-                self.asteroids_group, self.ship_group, False, False
-            )
+            pygame.sprite.groupcollide(group, self.ship_group, False, False)
             and self.resetting == False
         )
+
+    def ufo_handler(self):
+        if (
+            self.round > 1
+            and self.spawned_ufos < self.round
+            and len(self.ufo_group) < self.round
+            and self.ufo_round_active == False
+        ):
+            random.randint(1, 2000) <= 1 and self.spawn_ufo()
+
+        # UFO Shooting Percentage
+        if len(self.ufo_group) > 0:
+            self.ufo_shoot_timer -= 1
+            if self.ufo_shoot_timer == 0:
+                player_pos = self.ship_group.sprites()[0].position
+                ufo = self.ufo_group.sprites()[0]
+
+                self.set_ufo_shoot_timer()
+                self.projectile_group.add(ufo.shoot(player_pos=player_pos))
+
+    def round_handler(self):
+        if len(self.asteroids_group) == 0:
+            if (
+                len(self.ufo_group) == 0
+                and self.ufo_round_active == False
+                and self.spawned_ufos < self.round
+            ):
+                self.ufo_round_active = True
+                self.spawn_ufo()
+            elif len(self.ufo_group) == 0 and (
+                self.ufo_round_active == True or self.spawned_ufos >= self.round
+            ):
+                self.round += 1
+                self.ufo_round_active = False
+                self.start_asteroids_round()
 
     # Ancillary functions
     def draw_text(self, text, text_color, x, y):
