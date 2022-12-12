@@ -49,11 +49,12 @@ class AsteroidsGame:
         self.draw_ship = True
         self.round_timer_default = 5000
         self.round_timer = self.round_timer_default
-        self.ufo_shoot_dict = {(1, 2, 3, 4): (150, 200), (5, 6, 7, 8): (100, 150)}
+        self.ufo_shoot_dict = {(1, 2, 3, 4): (15, 20), (5, 6, 7, 8): (100, 150)}
         self.ufo_shoot_timer = 200
+        self.ufo_round_active = False
         self.set_ufo_shoot_timer()
 
-        # self.start_asteroids_round()
+        self.start_asteroids_round()
 
     def update(self) -> None:
         # Display logic
@@ -95,10 +96,11 @@ class AsteroidsGame:
 
         # Round logic
         if len(self.asteroids_group) == 0:
-            if len(self.ufo_group) == 0:
-                self.ufo_group.add(UFO(random.choice(["lg", "sm"]), self.screen))
+            if len(self.ufo_group) == 0 and self.ufo_round_active == False:
+                self.spawn_ufo()
+            elif len(self.ufo_group) == 0 and self.ufo_round_active == True:
                 self.round += 1
-            if len(self.ufo_group) == 0:
+                self.ufo_round_active = False
                 self.start_asteroids_round()
 
         # Event handling
@@ -110,7 +112,11 @@ class AsteroidsGame:
 
     # Main game logic functions
     def life_handler(self) -> None:
-        if self.ship_hit_asteroid() or self.ship_shot(self.ship_group, "ship"):
+        if (
+            self.ship_hit_asteroid()
+            or self.ship_shot(self.ship_group, "ship")
+            and not self.resetting
+        ):
             if self.lives > 0:
                 self.resetting = True
                 self.lives -= 1
@@ -151,7 +157,7 @@ class AsteroidsGame:
 
     def start_asteroids_round(self):
         asteroids = []
-        for _ in range(self.round + 3):
+        for _ in range(self.round):
             asteroids.append(Asteroid(self.screen, "lg"))
 
         self.round_timer = self.round_timer_default
@@ -220,3 +226,7 @@ class AsteroidsGame:
             self.ufo_shoot_timer = random.randint(timer_options[0], timer_options[1])
         else:
             self.ufo_shoot_timer = random.randint(20, 80)
+
+    def spawn_ufo(self):
+        self.ufo_round_active = True
+        self.ufo_group.add(UFO(random.choice(["lg", "sm"]), self.screen))
