@@ -150,7 +150,7 @@ class AsteroidsGame:
 
     def start_asteroids_round(self):
         asteroids = []
-        for _ in range(self.round):
+        for _ in range(self.round + 3):
             asteroids.append(Asteroid(self.screen, "lg"))
 
         self.round_timer = self.round_timer_default
