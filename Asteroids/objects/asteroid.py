@@ -12,7 +12,11 @@ class Asteroid(pygame.sprite.Sprite):
         size_dict = {"lg": 120, "md": 80, "sm": 50}
         size_px = size_dict[size]
 
-        speed_dict = {"lg": [0.2, 0.5, 0.8], "md": [0.9, 1.2, 1.5], "sm": [1, 2, 3]}
+        speed_dict = {
+            "lg": [0.4, 0.6, 0.8],
+            "md": [0.9, 1.2, 1.5, 2],
+            "sm": [2, 3, 3.5, 4, 5],
+        }
 
         x, y = off_screen()
 

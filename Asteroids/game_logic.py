@@ -76,18 +76,19 @@ class AsteroidsGame:
         self.asteroids_group.update()
         self.split_asteroid()
 
-        # Collision logic
-        self.life_handler()
+        if not self.game_over:
+            # Collision logic
+            self.life_handler()
+            self.ship_shot(self.ufo_group, "ufo")
 
-        self.ship_shot(self.ufo_group, "ufo")
+            # Score
+            self.get_current_score()
 
-        self.get_current_score()
+            # UFO logic
+            self.ufo_handler()
 
-        # UFO logic
-        self.ufo_handler()
-
-        # Round logic
-        self.round_handler()
+            # Round logic
+            self.round_handler()
 
         # Event handling
         for event in pygame.event.get():
@@ -111,6 +112,7 @@ class AsteroidsGame:
                 self.current_score = self.current_score * 0.75
             else:
                 self.game_over = True
+                self.ship_group.sprites()[0].kill()
                 print(
                     f"Final Score: {self.get_total_score()}\n"
                     f"Destroyed UFOs: {self.total_destroyed_ufos}\n"
@@ -145,7 +147,7 @@ class AsteroidsGame:
 
     def start_asteroids_round(self):
         asteroids = []
-        for _ in range(self.round):
+        for _ in range(self.round + 3):
             asteroids.append(Asteroid(self.screen, "lg"))
 
         self.round_timer = self.round_timer_default
@@ -169,6 +171,7 @@ class AsteroidsGame:
                 return True
             if type == "ufo" and not projectile[0].ufo_shot:
                 self.total_destroyed_ufos += 1
+                self.current_score += 1000
                 pygame.sprite.groupcollide(group, self.projectile_group, True, True)
 
     def ship_hit_object(self, group) -> bool:
@@ -228,20 +231,31 @@ class AsteroidsGame:
             self.ship_group.draw(self.screen)
 
         self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
+        self.draw_text(str(self.round), "WHITE", 760, 20)
+        self.draw_text(str(f"Score: {self.get_current_score()}"), "WHITE", 20, 60)
+
+        if self.game_over:
+            self.draw_game_over_screen()
 
     def run(self) -> None:
-        while self.game_over == False:
+        while True:
             self.update()
 
-    def get_current_score(self):
-        if self.round_timer > 1 and len(self.asteroids_group) != 0:
+    def get_current_score(self) -> int:
+        if (
+            self.round_timer > 1
+            and len(self.asteroids_group) != 0
+            and not self.game_over
+        ):
             self.round_timer -= 1
 
-        self.current_score = self.destroyed_asteroids * self.round_timer
+        self.current_score = (
+            self.destroyed_asteroids * float(f"1.{self.round_timer}") * 10
+        )
         return self.current_score
 
-    def get_total_score(self):
-        return str(int(sum(self.round_scores) + self.current_score / 100))
+    def get_total_score(self) -> str:
+        return str(int(sum(self.round_scores) + self.current_score))
 
     def set_ufo_shoot_timer(self):
         if self.round < 9:
@@ -253,3 +267,14 @@ class AsteroidsGame:
     def spawn_ufo(self):
         self.spawned_ufos += 1
         self.ufo_group.add(UFO(random.choice(["lg", "sm"]), self.screen))
+
+    def reset(self):
+        self.__init__()
+
+    def draw_game_over_screen(self):
+        self.draw_text("Game Over", "RED", 200, 200)
+        self.draw_text(f"Score: {self.get_total_score()}", "WHITE", 200, 250)
+        self.draw_text("Press Space to Play Again", "WHITE", 200, 300)
+
+        if pygame.key.get_pressed()[pygame.K_SPACE]:
+            self.reset()
