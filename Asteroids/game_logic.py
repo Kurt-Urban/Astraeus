@@ -1,3 +1,6 @@
+import os
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 import random
 from enum import Enum
@@ -232,7 +235,6 @@ class AsteroidsGame:
 
         self.draw_text(str(f"Lives: {self.lives}"), "WHITE", 20, 20)
         self.draw_text(str(self.round), "WHITE", 760, 20)
-        self.draw_text(str(f"Score: {self.get_current_score()}"), "WHITE", 20, 60)
 
         if self.game_over:
             self.draw_game_over_screen()
