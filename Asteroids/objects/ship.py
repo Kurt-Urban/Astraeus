@@ -48,7 +48,7 @@ class Ship(pygame.sprite.Sprite):
             self.images[1 if self.moving else 0], -self.heading
         )
 
-    def foward(self):
+    def forward(self):
         self.moving = True
         self.speed += 0.3
         if self.speed >= self.top_speed:
@@ -57,9 +57,9 @@ class Ship(pygame.sprite.Sprite):
 
     def rotate(self, angle):
         if self.heading >= 360:
-            self.heading -= 360
+            self.heading = 0
         if self.heading <= -360:
-            self.heading += 360
+            self.heading = 0
 
         self.heading += angle
         self.rect = self.image.get_rect(center=self.rect.center)
@@ -67,7 +67,7 @@ class Ship(pygame.sprite.Sprite):
     def get_key_press(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_w]:
-            self.foward()
+            self.forward()
         else:
             self.moving = False
         if keys[pygame.K_a]:
@@ -76,12 +76,9 @@ class Ship(pygame.sprite.Sprite):
             self.rotate(self.rotate_speed)
         # Shooting Keys Logic
         if keys[pygame.K_SPACE]:
-            if (
-                self.shooting_delay == self.shooting_delay_default
-                and self.shot == False
-            ):
+            if self.shooting_delay == self.shooting_delay_default and not self.shot:
                 self.shot = True
-        if keys[pygame.K_SPACE] == False:
+        if not keys[pygame.K_SPACE]:
             self.shot = False
             self.shooting_delay = self.shooting_delay_default
 

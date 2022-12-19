@@ -6,6 +6,5 @@ def human():
     game.run()
 
 
-def ai():
-    game = ast.AsteroidsGame()
-    game.ai_run()
+def ai_game() -> ast.AsteroidsGame:
+    return ast.AsteroidsGame()

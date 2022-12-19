@@ -4,7 +4,7 @@ os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "hide"
 import pygame
 import random
 from enum import Enum
-from .utils.object_functions import get_dict_value
+from .utils.object_functions import get_dict_value, get_target_direction
 from .objects.ship import Ship
 from .objects.ufo import UFO
 from .objects.asteroid import Asteroid
@@ -23,9 +23,10 @@ class AsteroidsGame:
         self.font_color = (255, 255, 255)  # White
 
         # Initialize Ship
-        self.ship = Ship(400, self.screen)
+        ship = Ship(400, self.screen)
         self.ship_group = pygame.sprite.Group()
-        self.ship_group.add(self.ship)
+        self.ship_group.add(ship)
+        self.ship = self.ship_group.sprites()[0]
 
         # Initialize Projectile Group
         self.projectile_group = pygame.sprite.Group()
@@ -58,6 +59,7 @@ class AsteroidsGame:
         self.set_ufo_shoot_timer()
 
         self.start_asteroids_round()
+        self.objects = self.asteroids_group.sprites()
 
     def update(self) -> None:
         # Display logic
@@ -93,6 +95,10 @@ class AsteroidsGame:
             # Round logic
             self.round_handler()
 
+            self.objects = self.asteroids_group.sprites()
+            if len(self.ufo_group) > 0:
+                self.objects.extend(self.ufo_group.sprites())
+
         # Event handling
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -115,7 +121,7 @@ class AsteroidsGame:
                 self.current_score = self.current_score * 0.75
             else:
                 self.game_over = True
-                self.ship_group.sprites()[0].kill()
+                self.ship.kill()
                 print(
                     f"Final Score: {self.get_total_score()}\n"
                     f"Destroyed UFOs: {self.total_destroyed_ufos}\n"
@@ -196,7 +202,7 @@ class AsteroidsGame:
         if len(self.ufo_group) > 0:
             self.ufo_shoot_timer -= 1
             if self.ufo_shoot_timer == 0:
-                player_pos = self.ship_group.sprites()[0].position
+                player_pos = self.ship.position
                 ufo = self.ufo_group.sprites()[0]
 
                 self.set_ufo_shoot_timer()
@@ -280,3 +286,127 @@ class AsteroidsGame:
 
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             self.reset()
+
+    # AI Functions
+    def get_asteroid_positions(self):
+        return [asteroid.position for asteroid in self.asteroids_group]
+
+    def get_ufo_positions(self):
+        return [ufo.position for ufo in self.ufo_group]
+
+    def get_ship_position(self):
+        return self.ship.position
+
+    def get_ship_angle(self):
+        return self.ship.angle
+
+    def get_near_objects(self):
+        return [
+            obj
+            for obj in self.objects
+            if pygame.math.Vector2.distance_to(self.ship.position, obj.position) < 100
+        ]
+
+    def get_target(self):
+        return min(
+            self.objects,
+            key=lambda obj: pygame.math.Vector2.distance_to(
+                self.ship.position, obj.position
+            ),
+        )
+
+    def get_next_target(self):
+        objs = self.objects.copy().remove(self.get_target())
+        if objs is None:
+            return self.get_target()
+        return min(
+            objs,
+            key=lambda obj: pygame.math.Vector2.distance_to(
+                self.ship.position, obj.position
+            ),
+        )
+
+    def get_target_angle(self):
+        return get_target_direction(
+            self.ship.position,
+            self.get_target().position,
+        )
+
+    # AI State Functions
+    def in_danger(self):
+        objs = self.get_near_objects()
+        if len(objs) > 0:
+            for obj in objs:
+                if (
+                    pygame.math.Vector2.distance_to(self.ship.position, obj.position)
+                    < 50
+                ):
+                    return True
+        return False
+
+    def near_objects(self):
+        return len(self.get_near_objects())
+
+    def aiming_at_target(self):
+        if self.get_target_angle() == self.ship.heading:
+            return True
+        return False
+
+    def distance_to_target(self):
+        return int(
+            pygame.math.Vector2.distance_to(
+                self.ship.position, self.get_target().position
+            )
+        )
+
+    def distance_to_next_target(self):
+        return int(
+            pygame.math.Vector2.distance_to(
+                self.ship.position, self.get_next_target().position
+            )
+        )
+
+    def next_target_angle(self):
+        return get_target_direction(
+            self.ship.position,
+            self.get_next_target().position,
+        )
+
+    def ship_angle(self):
+        return self.ship.heading
+
+    # AI Action Functions
+    def step(self, action):
+        score = int(self.get_total_score())
+        lives = self.lives
+
+        if action[0] == 1:
+            self.ship.forward()
+        if action[1] == 1:
+            self.ship.rotate(-self.ship.rotate_speed)
+        if action[2] == 1:
+            self.ship.rotate(self.ship.rotate_speed)
+        if action[3] == 1:
+            self.ship.shot = True
+            self.ship.shoot()
+        self.update()
+
+        reward = 0
+        if self.in_danger():
+            reward -= 1
+        if self.aiming_at_target():
+            reward += 1
+        if self.distance_to_target() < 100:
+            reward += 1
+        if len(self.get_near_objects()) > 1:
+            reward -= 1
+        if int(self.get_total_score()) > score:
+            reward = 1
+        if self.lives < lives:
+            reward -= 10
+        if self.game_over:
+            reward -= 10
+
+        done = self.game_over
+
+        return reward, done, score

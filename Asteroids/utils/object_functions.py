@@ -1,4 +1,5 @@
 import random
+import math
 
 
 def movement(self, **kwargs):
@@ -46,3 +47,8 @@ def off_screen() -> tuple:
 
 def get_dict_value(dict, key):
     return next(v for k, v in dict.items() if key in k)
+
+
+def get_target_direction(ship_pos, obj_pos):
+    angle = math.atan2(ship_pos[1] - obj_pos[1], ship_pos[0] - obj_pos[0])
+    return int(math.degrees(angle) + 90)

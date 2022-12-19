@@ -3,7 +3,12 @@ import random
 import numpy as np
 import math
 from .projectile import Projectile
-from Asteroids.utils.object_functions import movement, screen_wrap, off_screen
+from Asteroids.utils.object_functions import (
+    movement,
+    screen_wrap,
+    off_screen,
+    get_target_direction,
+)
 
 
 class UFO(pygame.sprite.Sprite):
@@ -43,9 +48,6 @@ class UFO(pygame.sprite.Sprite):
 
         if self.size == "sm":
             player_pos = kwargs.get("player_pos")
-            angle = math.atan2(
-                player_pos[1] - self.position[1], player_pos[0] - self.position[0]
-            )
-            heading = math.degrees(angle) + 90
+            heading = get_target_direction(player_pos, self.position)
 
         return Projectile(self.position, heading, self.screen, True)
