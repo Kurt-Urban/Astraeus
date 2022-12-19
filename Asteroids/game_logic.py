@@ -57,6 +57,7 @@ class AsteroidsGame:
         self.ufo_shoot_timer = 200
         self.ufo_round_active = False
         self.set_ufo_shoot_timer()
+        self.ship_shoot_timer = 0
 
         self.start_asteroids_round()
         self.objects = self.asteroids_group.sprites()
@@ -76,6 +77,8 @@ class AsteroidsGame:
             self.projectile_group.add(self.ship.shoot())
 
         self.projectile_group.update()
+        if self.ship_shoot_timer > 0:
+            self.ship_shoot_timer -= 1
 
         # Asteroid logic
         self.asteroids_group.update()
@@ -386,9 +389,10 @@ class AsteroidsGame:
             self.ship.rotate(-self.ship.rotate_speed)
         if action[2] == 1:
             self.ship.rotate(self.ship.rotate_speed)
-        if action[3] == 1:
-            self.ship.shot = True
-            self.ship.shoot()
+        if action[3] == 1 and self.ship_shoot_timer == 0:
+            self.projectile_group.add(self.ship.shoot())
+            self.ship_shoot_timer = 30
+
         self.update()
 
         reward = 0

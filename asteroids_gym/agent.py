@@ -73,7 +73,7 @@ def train():
     game = AsteroidsGame()
     game.step(action=[0, 0, 0, 0])
 
-    while True:
+    while agent.episodes < 50:
         old_state = agent.get_state(game)
 
         next_action = agent.get_action(old_state)
