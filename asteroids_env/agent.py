@@ -18,19 +18,11 @@ class Agent:
         self.episilon = 0  # Exploration
         self.gamma = 0.9  # Discount
         self.memory = deque(maxlen=MAX_MEM)
-        self.model = Linear_QNet(7, 256, 4)
+        self.model = Linear_QNet(11, 256, 4)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
-        return [
-            game.in_danger(),
-            game.near_objects(),
-            game.distance_to_target(),
-            game.get_target_angle(),
-            game.distance_to_next_target(),
-            game.next_target_angle(),
-            game.ship_angle(),
-        ]
+        return game.get_state()
 
     def memorize(self, state, action, reward, next_state, done):
         self.memory.append((state, action, reward, next_state, done))
