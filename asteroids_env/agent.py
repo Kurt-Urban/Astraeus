@@ -25,8 +25,8 @@ class Agent:
         return [
             game.in_danger(),
             game.near_objects(),
-            game.aiming_at_target(),
             game.distance_to_target(),
+            game.get_target_angle(),
             game.distance_to_next_target(),
             game.next_target_angle(),
             game.ship_angle(),
@@ -49,7 +49,7 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, old_state):
-        self.episilon = 25 - self.episodes
+        self.episilon = 10 - self.episodes
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
         if random.randint(0, 200) < self.episilon:
@@ -73,9 +73,9 @@ def train():
     game = AsteroidsGame()
     game.step(action=[0, 0, 0, 0])
 
-    while agent.episodes < 50:
+    while agent.episodes < 20:
         old_state = agent.get_state(game)
-
+        print(old_state)
         next_action = agent.get_action(old_state)
 
         reward, done, score = game.step(action=next_action)

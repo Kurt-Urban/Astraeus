@@ -307,7 +307,7 @@ class AsteroidsGame:
         return [
             obj
             for obj in self.objects
-            if pygame.math.Vector2.distance_to(self.ship.position, obj.position) < 100
+            if pygame.math.Vector2.distance_to(self.ship.position, obj.position) < 300
         ]
 
     def get_target(self):
@@ -329,11 +329,8 @@ class AsteroidsGame:
             ),
         )
 
-    def get_target_angle(self):
-        return get_target_direction(
-            self.ship.position,
-            self.get_target().position,
-        )
+    def near_objects(self):
+        return len(self.get_near_objects())
 
     # AI State Functions
     def in_danger(self):
@@ -342,24 +339,25 @@ class AsteroidsGame:
             for obj in objs:
                 if (
                     pygame.math.Vector2.distance_to(self.ship.position, obj.position)
-                    < 50
+                    < 150
                 ):
-                    return True
-        return False
+                    return 1
+        return 0
 
-    def near_objects(self):
-        return len(self.get_near_objects())
-
-    def aiming_at_target(self):
-        if self.get_target_angle() == self.ship.heading:
-            return True
-        return False
+    def ship_angle(self):
+        return self.ship.heading
 
     def distance_to_target(self):
         return int(
             pygame.math.Vector2.distance_to(
                 self.ship.position, self.get_target().position
             )
+        )
+
+    def get_target_angle(self):
+        return get_target_direction(
+            self.ship.position,
+            self.get_target().position,
         )
 
     def distance_to_next_target(self):
@@ -374,9 +372,6 @@ class AsteroidsGame:
             self.ship.position,
             self.get_next_target().position,
         )
-
-    def ship_angle(self):
-        return self.ship.heading
 
     # AI Action Functions
     def step(self, action):
@@ -398,11 +393,9 @@ class AsteroidsGame:
         reward = 0
         if self.in_danger():
             reward -= 1
-        if self.aiming_at_target():
+        if self.distance_to_target() < 200:
             reward += 1
-        if self.distance_to_target() < 100:
-            reward += 1
-        if len(self.get_near_objects()) > 1:
+        if len(self.get_near_objects()) > 2:
             reward -= 1
         if int(self.get_total_score()) > score:
             reward = 1
