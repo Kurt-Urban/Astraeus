@@ -49,7 +49,7 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, old_state):
-        self.episilon = 100 - self.episodes
+        self.episilon = 25 - self.episodes
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
         if random.randint(0, 200) < self.episilon:
