@@ -57,11 +57,10 @@ class Ship(pygame.sprite.Sprite):
             self.heading = 0
 
         self.heading += angle
-        self.rect = self.image.get_rect(center=self.rect.center)
-
         self.image = pygame.transform.rotate(
             self.images[1 if self.moving else 0], -self.heading
         )
+        self.rect = self.image.get_rect(center=self.rect.center)
 
     def get_key_press(self):
         keys = pygame.key.get_pressed()
