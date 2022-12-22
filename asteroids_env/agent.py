@@ -6,20 +6,26 @@ from Asteroids.game_logic import AsteroidsGame
 from model import Linear_QNet, QTrainer
 from utils import plot
 import time
+import os
 
 MAX_MEM = 100_000
 BATCH = 1000
-LR = 0.001  # Learning Rate
+LR = 0.01  # Learning Rate
+
+file_name = "model1.pth"
 
 
 class Agent:
     def __init__(self) -> None:
         self.episodes = 0
         self.episilon = 0  # Exploration
-        self.gamma = 0.9  # Discount
+        self.gamma = 0.8  # Discount
         self.memory = deque(maxlen=MAX_MEM)
         self.model = Linear_QNet(11, 256, 4)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
+        if os.path.isfile(f"model/{file_name}"):
+            self.model.load_state_dict(torch.load(f"model/{file_name}"))
+            self.model.eval()
 
     def get_state(self, game):
         return game.get_state()
@@ -36,12 +42,13 @@ class Agent:
         states, actions, rewards, next_states, dones = zip(*mini_sample)
 
         self.trainer.train_step(states, actions, rewards, next_states, dones)
+        self.model.save(file_name=file_name)
 
     def train_short(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, old_state):
-        self.episilon = 10 - self.episodes
+        self.episilon = 75 - self.episodes
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
         if random.randint(0, 200) < self.episilon:
@@ -65,9 +72,9 @@ def train():
     game = AsteroidsGame()
     game.step(action=[0, 0, 0, 0])
 
-    while agent.episodes < 20:
+    while agent.episodes < 75:
         old_state = agent.get_state(game)
-        print(old_state)
+
         next_action = agent.get_action(old_state)
 
         reward, done, score = game.step(action=next_action)

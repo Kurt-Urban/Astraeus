@@ -336,49 +336,46 @@ class AsteroidsGame:
     def get_state(self):
         return [
             self.ship_angle(),
-            self.ship_x(),
-            self.ship_y(),
             self.object_positions(0)[0],
             self.object_positions(0)[1],
-            self.object_positions(0)[2],
-            self.object_positions(0)[3],
             self.object_positions(1)[0],
             self.object_positions(1)[1],
-            self.object_positions(1)[2],
-            self.object_positions(1)[3],
+            self.object_positions(2)[0],
+            self.object_positions(2)[1],
+            self.object_positions(3)[0],
+            self.object_positions(3)[1],
+            self.object_positions(4)[0],
+            self.object_positions(4)[1],
         ]
 
     def ship_angle(self):
         return self.ship.heading
 
-    def ship_x(self):
-        return int(self.ship.position.x)
-
-    def ship_y(self):
-        return int(self.ship.position.y)
-
     def object_positions(self, index):
         objs = [obj for obj in self.objects]
 
         if objs is None or len(objs) == 0:
-            return [(0, 0, 0, 0), (0, 0, 0, 0)]
+            return [(0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]
 
         obj_list = [
             (
-                int(obj.position.x),
-                int(obj.position.y),
                 int(pygame.math.Vector2.distance_to(self.ship.position, obj.position)),
                 get_target_direction(self.ship.position, obj.position),
             )
             for obj in objs
         ]
 
-        if len(obj_list) > 2:
-            obj_list.sort(key=lambda x: x[2])
-            obj_list = obj_list[2:]
+        obj_list.sort(key=lambda x: x[0])
 
-        if len(obj_list) == 1:
-            obj_list.append((0, 0, 0, 0))
+        if len(obj_list) > 5:
+            obj_list = obj_list[4:]
+
+        def append_obj(num):
+            for _ in range(num):
+                obj_list.append((0, 0))
+
+        if len(obj_list) < 5:
+            append_obj(5 - len(obj_list))
 
         return obj_list[index]
 
@@ -402,7 +399,15 @@ class AsteroidsGame:
         reward = 0
         if int(self.get_total_score()) > score:
             reward = 1
-        if self.object_positions(0)[2] < 300 or self.object_positions(1)[2] < 300:
+        else:
+            reward = -0.001
+        if (
+            self.object_positions(0)[0] < 300
+            or self.object_positions(1)[0] < 300
+            or self.object_positions(2)[0] < 300
+            or self.object_positions(3)[0] < 300
+            or self.object_positions(4)[0] < 300
+        ):
             reward -= 1
         if self.lives < lives:
             reward -= 10
