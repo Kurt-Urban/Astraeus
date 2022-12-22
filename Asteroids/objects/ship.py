@@ -4,7 +4,7 @@ from Asteroids.utils.object_functions import movement, screen_wrap
 
 
 class Ship(pygame.sprite.Sprite):
-    def __init__(self, xy, screen):
+    def __init__(self, xy, screen, ai_playing=False):
         pygame.sprite.Sprite.__init__(self)
         img1 = pygame.image.load("assets/ship1.png")
         img1 = pygame.transform.scale(img1, (30, 57))
@@ -27,6 +27,7 @@ class Ship(pygame.sprite.Sprite):
         self.shooting_delay_default = 200
         self.shooting_delay = self.shooting_delay_default
         self.moving = False
+        self.ai_playing = ai_playing
 
     def update(self):
         # Movement Logic
@@ -37,7 +38,10 @@ class Ship(pygame.sprite.Sprite):
             self.speed = 0
         movement(self, acceleration=0.985, ship=True)
         screen_wrap(self)
-        self.get_key_press()
+        self.display_thruster()
+
+        if not self.ai_playing:
+            self.get_key_press()
 
         # Shooting Logic
         if self.shot and self.shooting_delay != 0:
@@ -50,6 +54,11 @@ class Ship(pygame.sprite.Sprite):
             self.speed = self.top_speed
         self.velocity.from_polar((self.speed, self.heading + 270))
 
+    def display_thruster(self):
+        self.image = pygame.transform.rotate(
+            self.images[1 if self.moving else 0], -self.heading
+        )
+
     def rotate(self, angle):
         if self.heading >= 360:
             self.heading = 0
@@ -57,9 +66,7 @@ class Ship(pygame.sprite.Sprite):
             self.heading = 0
 
         self.heading += angle
-        self.image = pygame.transform.rotate(
-            self.images[1 if self.moving else 0], -self.heading
-        )
+        self.display_thruster()
         self.rect = self.image.get_rect(center=self.rect.center)
 
     def get_key_press(self):

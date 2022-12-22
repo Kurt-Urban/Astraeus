@@ -3,12 +3,12 @@ import sys
 
 
 def human():
-    game = ast.AsteroidsGame()
+    game = ast.AsteroidsGame(False)
     game.run()
 
 
 def ai():
-    game = ast.AsteroidsGame()
+    game = ast.AsteroidsGame(True)
     game.ai_run()
 
 

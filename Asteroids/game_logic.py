@@ -9,9 +9,11 @@ from .objects.ship import Ship
 from .objects.ufo import UFO
 from .objects.asteroid import Asteroid
 
+ST_NUM = 10
+
 
 class AsteroidsGame:
-    def __init__(self) -> None:
+    def __init__(self, ai_playing) -> None:
         # Initialize pygame
         pygame.init()
         self.clock = pygame.time.Clock()
@@ -21,9 +23,10 @@ class AsteroidsGame:
         pygame.display.set_caption("Asteroids")
         self.font = pygame.font.SysFont("Bauhaus 93", 40)
         self.font_color = (255, 255, 255)  # White
+        self.ai_playing = ai_playing
 
         # Initialize Ship
-        ship = Ship(400, self.screen)
+        ship = Ship(400, self.screen, ai_playing=ai_playing)
         self.ship_group = pygame.sprite.Group()
         self.ship_group.add(ship)
         self.ship = self.ship_group.sprites()[0]
@@ -101,6 +104,9 @@ class AsteroidsGame:
             self.objects = self.asteroids_group.sprites()
             if len(self.ufo_group) > 0:
                 self.objects.extend(self.ufo_group.sprites())
+
+            if self.ai_playing:
+                self.draw_target_lines()
 
         # Event handling
         for event in pygame.event.get():
@@ -279,8 +285,8 @@ class AsteroidsGame:
         self.spawned_ufos += 1
         self.ufo_group.add(UFO(random.choice(["lg", "sm"]), self.screen))
 
-    def reset(self):
-        self.__init__()
+    def reset(self, ai_playing):
+        self.__init__(ai_playing=ai_playing)
 
     def draw_game_over_screen(self):
         self.draw_text("Game Over", "RED", 200, 200)
@@ -288,7 +294,7 @@ class AsteroidsGame:
         self.draw_text("Press Space to Play Again", "WHITE", 200, 300)
 
         if pygame.key.get_pressed()[pygame.K_SPACE]:
-            self.reset()
+            self.reset(False)
 
     # AI Functions
     def get_asteroid_positions(self):
@@ -332,42 +338,67 @@ class AsteroidsGame:
     def near_objects(self):
         return len(self.get_near_objects())
 
+    def draw_target_lines(self):
+        objs = [obj for obj in self.objects]
+        objs_list = [
+            (
+                pygame.math.Vector2.distance_to(self.ship.position, obj.position),
+                obj.position,
+            )
+            for obj in objs
+        ]
+        objs_list.sort(key=lambda x: x[0])
+        if len(objs_list) > ST_NUM:
+            objs_list = objs_list[ST_NUM - 1 :]
+
+        for obj in objs_list:
+            pygame.draw.line(
+                self.screen,
+                (255, 0, 0),
+                self.ship.position,
+                obj[1],
+                1,
+            )
+
     # AI State Functions
     def get_state(self):
         return [
-            self.ship_angle(),
-            *[self.object_positions(i)[0] for i in range(4)],
-            *[self.object_positions(i)[1] for i in range(4)],
+            self.ship_angle() / 300,
+            *[self.object_positions(i)[0] for i in range(ST_NUM - 1)],
+            *[self.object_positions(i)[1] for i in range(ST_NUM - 1)],
         ]
 
     def ship_angle(self):
         return self.ship.heading
 
-    def object_positions(self, index):
+    def object_positions(self, index=-1):
         objs = [obj for obj in self.objects]
 
         if objs is None or len(objs) == 0:
-            return [(0, 0), (0, 0), (0, 0), (0, 0)]
+            return [(0, 0) for _ in range(ST_NUM - 1)]
 
         obj_list = [
             (
-                int(pygame.math.Vector2.distance_to(self.ship.position, obj.position)),
-                get_target_direction(self.ship.position, obj.position),
+                pygame.math.Vector2.distance_to(self.ship.position, obj.position) / 200,
+                get_target_direction(self.ship.position, obj.position) / 300,
             )
             for obj in objs
         ]
 
         obj_list.sort(key=lambda x: x[0])
 
-        if len(obj_list) > 4:
-            obj_list = obj_list[3:]
+        if len(obj_list) > ST_NUM:
+            obj_list = obj_list[ST_NUM - 1 :]
 
         def append_obj(num):
             for _ in range(num):
                 obj_list.append((0, 0))
 
-        if len(obj_list) < 4:
-            append_obj(4 - len(obj_list))
+        if len(obj_list) < ST_NUM:
+            append_obj(10 - len(obj_list))
+
+        if index == -1:
+            return obj_list
 
         return obj_list[index]
 
@@ -393,7 +424,7 @@ class AsteroidsGame:
             reward = 10
         if self.round_timer == 0:
             self.game_over = True
-        if True in [self.object_positions(i)[0] < 300 for i in range(4)]:
+        if True in [self.object_positions(i)[0] < 0.6 for i in range(ST_NUM - 1)]:
             reward -= 1
         if self.lives < lives:
             reward -= 10
