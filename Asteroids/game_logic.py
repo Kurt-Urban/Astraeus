@@ -51,7 +51,7 @@ class AsteroidsGame:
         self.reset_timer = self.reset_timer_default
         self.game_over = False
         self.draw_ship = True
-        self.round_timer_default = 5000
+        self.round_timer_default = 7500
         self.round_timer = self.round_timer_default
         self.ufo_shoot_dict = {(1, 2, 3, 4): (150, 200), (5, 6, 7, 8): (100, 150)}
         self.ufo_shoot_timer = 200
@@ -336,16 +336,8 @@ class AsteroidsGame:
     def get_state(self):
         return [
             self.ship_angle(),
-            self.object_positions(0)[0],
-            self.object_positions(0)[1],
-            self.object_positions(1)[0],
-            self.object_positions(1)[1],
-            self.object_positions(2)[0],
-            self.object_positions(2)[1],
-            self.object_positions(3)[0],
-            self.object_positions(3)[1],
-            self.object_positions(4)[0],
-            self.object_positions(4)[1],
+            *[self.object_positions(i)[0] for i in range(4)],
+            *[self.object_positions(i)[1] for i in range(4)],
         ]
 
     def ship_angle(self):
@@ -355,7 +347,7 @@ class AsteroidsGame:
         objs = [obj for obj in self.objects]
 
         if objs is None or len(objs) == 0:
-            return [(0, 0), (0, 0), (0, 0), (0, 0), (0, 0)]
+            return [(0, 0), (0, 0), (0, 0), (0, 0)]
 
         obj_list = [
             (
@@ -367,15 +359,15 @@ class AsteroidsGame:
 
         obj_list.sort(key=lambda x: x[0])
 
-        if len(obj_list) > 5:
-            obj_list = obj_list[4:]
+        if len(obj_list) > 4:
+            obj_list = obj_list[3:]
 
         def append_obj(num):
             for _ in range(num):
                 obj_list.append((0, 0))
 
-        if len(obj_list) < 5:
-            append_obj(5 - len(obj_list))
+        if len(obj_list) < 4:
+            append_obj(4 - len(obj_list))
 
         return obj_list[index]
 
@@ -398,16 +390,10 @@ class AsteroidsGame:
 
         reward = 0
         if int(self.get_total_score()) > score:
-            reward = 1
-        else:
-            reward = -0.001
-        if (
-            self.object_positions(0)[0] < 300
-            or self.object_positions(1)[0] < 300
-            or self.object_positions(2)[0] < 300
-            or self.object_positions(3)[0] < 300
-            or self.object_positions(4)[0] < 300
-        ):
+            reward = 10
+        if self.round_timer == 0:
+            self.game_over = True
+        if True in [self.object_positions(i)[0] < 300 for i in range(4)]:
             reward -= 1
         if self.lives < lives:
             reward -= 10

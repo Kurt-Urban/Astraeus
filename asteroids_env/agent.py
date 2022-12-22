@@ -10,7 +10,7 @@ import os
 
 MAX_MEM = 100_000
 BATCH = 1000
-LR = 0.01  # Learning Rate
+LR = 0.1  # Learning Rate
 
 file_name = "model1.pth"
 
@@ -19,9 +19,9 @@ class Agent:
     def __init__(self) -> None:
         self.episodes = 0
         self.episilon = 0  # Exploration
-        self.gamma = 0.8  # Discount
+        self.gamma = 0.9  # Discount
         self.memory = deque(maxlen=MAX_MEM)
-        self.model = Linear_QNet(11, 256, 4)
+        self.model = Linear_QNet(9, 256, 4)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         if os.path.isfile(f"model/{file_name}"):
             self.model.load_state_dict(torch.load(f"model/{file_name}"))
@@ -48,10 +48,10 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, old_state):
-        self.episilon = 75 - self.episodes
+        self.episilon = 50 - self.episodes
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
-        if random.randint(0, 200) < self.episilon:
+        if random.randint(0, 100) < self.episilon:
             move = random.randint(0, 3)
             action[move] = 1
         else:
@@ -61,6 +61,11 @@ class Agent:
             action[move] = 1
 
         return action
+
+    def load_model(self):
+        if os.path.isfile(f"model/{file_name}"):
+            self.model.load_state_dict(torch.load(f"model/{file_name}"))
+            self.model.eval()
 
 
 def train():
@@ -89,6 +94,7 @@ def train():
         if done:
             game.reset()
             agent.episodes += 1
+            agent.load_model()
             agent.train_long()
 
             if score > record:
