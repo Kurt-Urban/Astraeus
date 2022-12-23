@@ -8,12 +8,14 @@ from utils import plot
 import time
 import os
 
-MAX_MEM = 100_000
+MAX_MEM = 100_000_000
 BATCH = 1000
-LR = 0.1  # Learning Rate
-EPSILON = 100
+LR = 0.01  # Learning Rate
+EPSILON = 250
+EPISODES = 200
 
 file_name = "model1.pth"
+file_path = f"models/{file_name}"
 
 
 class Agent:
@@ -24,9 +26,7 @@ class Agent:
         self.memory = deque(maxlen=MAX_MEM)
         self.model = Linear_QNet(19, 256, 4)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        if os.path.isfile(f"model/{file_name}"):
-            self.model.load_state_dict(torch.load(f"model/{file_name}"))
-            self.model.eval()
+        self.load_model()
 
     def get_state(self, game):
         return game.get_state()
@@ -49,7 +49,7 @@ class Agent:
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, old_state):
-        self.episilon = (EPSILON * 0.7) - self.episodes
+        self.episilon = (EPSILON * 1) - self.episodes
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
         if random.randint(0, EPSILON) < self.episilon:
@@ -64,9 +64,11 @@ class Agent:
         return action
 
     def load_model(self):
-        if os.path.isfile(f"model/{file_name}"):
-            self.model.load_state_dict(torch.load(f"model/{file_name}"))
+        if os.path.isfile(file_path):
+            print("Loading model...")
+            self.model.load_state_dict(torch.load(file_path))
             self.model.eval()
+            print("Model loaded.")
 
 
 def train():
@@ -77,8 +79,9 @@ def train():
     agent = Agent()
     game = AsteroidsGame(True)
     game.step(action=[0, 0, 0, 0])
+    print("Starting training...")
 
-    while agent.episodes < 75:
+    while agent.episodes < EPISODES:
         old_state = agent.get_state(game)
         print(old_state)
         next_action = agent.get_action(old_state)
@@ -90,12 +93,9 @@ def train():
         agent.train_short(old_state, next_action, reward, new_state, done)
         agent.memorize(old_state, next_action, reward, new_state, done)
 
-        time.sleep(1 / 60)
-
         if done:
             game.reset(True)
             agent.episodes += 1
-            agent.load_model()
             agent.train_long()
 
             if score > record:

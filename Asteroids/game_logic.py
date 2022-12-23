@@ -17,7 +17,7 @@ class AsteroidsGame:
         # Initialize pygame
         pygame.init()
         self.clock = pygame.time.Clock()
-        self.fps = 60
+        self.fps = 20000 if ai_playing is True else 60
         self.screen_size = 800
         self.screen = pygame.display.set_mode([self.screen_size, self.screen_size])
         pygame.display.set_caption("Asteroids")
@@ -348,8 +348,6 @@ class AsteroidsGame:
             for obj in objs
         ]
         objs_list.sort(key=lambda x: x[0])
-        if len(objs_list) > ST_NUM:
-            objs_list = objs_list[ST_NUM - 1 :]
 
         for obj in objs_list:
             pygame.draw.line(
@@ -386,9 +384,6 @@ class AsteroidsGame:
         ]
 
         obj_list.sort(key=lambda x: x[0])
-
-        if len(obj_list) > ST_NUM:
-            obj_list = obj_list[ST_NUM - 1 :]
 
         def append_obj(num):
             for _ in range(num):
