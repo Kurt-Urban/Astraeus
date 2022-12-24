@@ -32,33 +32,25 @@ class QTrainer:
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = nn.MSELoss()
 
-    def train_step(self, state, action, reward, next_state, done):
-        state = torch.tensor(state, dtype=torch.float)
-        next_state = torch.tensor(next_state, dtype=torch.float)
-        action = torch.tensor(action, dtype=torch.long)
-        reward = torch.tensor(reward, dtype=torch.float)
+    def train_step(self, states, actions, rewards, next_states, dones):
+        states = torch.tensor(states, dtype=torch.float)
+        actions = torch.tensor(actions, dtype=torch.long)
+        rewards = torch.tensor(rewards, dtype=torch.float).unsqueeze(-1)
+        next_states = torch.tensor(next_states, dtype=torch.float)
+        dones = torch.tensor(dones, dtype=torch.bool).unsqueeze(-1)
 
-        if len(state.shape) == 1:
-            state = torch.unsqueeze(state, 0)
-            next_state = torch.unsqueeze(next_state, 0)
-            action = torch.unsqueeze(action, 0)
-            reward = torch.unsqueeze(reward, 0)
-            done = (done,)
+        # current q values (gather does weird indexing, this is just Q(state)[action], sadly
+        # self.model(states)[actions] doesn't behave as you would expect)
+        q_vals = self.model(states).gather(index=torch.argmax(actions, dim=-1).unsqueeze(1), dim=1)
 
-        prediction = self.model(state)
-
-        new_prediction = prediction.clone()
-        for idx in range(len(done)):
-            Q_new = reward[idx]
-            if not done[idx]:
-                Q_new = reward[idx] + self.gamma * torch.max(
-                    self.model(next_state[idx])
-                )
-
-            new_prediction[idx][torch.argmax(action).item()] = Q_new
+        # expected q values
+        with torch.no_grad():  # .no_grad() is important so that no gradients get propagated through the td-target
+            next_q_vals = torch.max(self.model(next_states), dim=-1)[0].unsqueeze(-1)
+            td_target = rewards + self.gamma * next_q_vals * (~dones)  # *(~dones) kills the summand in each index
+            # automatically! x*(~True)=0 and x*(~False)=x
 
         self.optimizer.zero_grad()
-        loss = self.criterion(new_prediction, prediction)
+        loss = self.criterion(q_vals, td_target)  # penalize the difference between td-target and predicted q_values
         loss.backward()
 
         self.optimizer.step()

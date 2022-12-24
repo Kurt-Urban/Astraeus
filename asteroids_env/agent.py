@@ -10,9 +10,14 @@ import os
 
 MAX_MEM = 100_000_000
 BATCH = 1000
-LR = 0.01  # Learning Rate
-EPSILON = 200
-EPISODES = 200
+LR = 0.001  # Learning Rate (I made it smaller since the environment is rather complicated
+            # and a big learning rate probably wont lead to convergence
+GAMMA = 0.99  # 0.9 is rather small.
+EPSILON = 100  # (made this smaller: less exploration)
+EPISODES = 500
+EPSILON_MIN = 0.05  # introduced a minimum epsilon to make the epsilon schedule more flexible
+N_TRANSITIONS_BETWEEN_UPDATES = 32  # introduced this to make periodic updates sampled from replay memory
+
 
 file_name = "model1.pth"
 file_path = f"models/{file_name}"
@@ -21,12 +26,12 @@ file_path = f"models/{file_name}"
 class Agent:
     def __init__(self) -> None:
         self.episodes = 0
-        self.episilon = 0  # Exploration
+        self.epsilon = 0  # Exploration
         self.gamma = 0.9  # Discount
         self.memory = deque(maxlen=MAX_MEM)
         self.model = Linear_QNet(19, 256, 4)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        self.load_model()
+        # self.load_model()  # I wouldn't load completely overfit models from previous runs that didnt work!
 
     def get_state(self, game):
         return game.get_state()
@@ -44,14 +49,11 @@ class Agent:
 
         self.trainer.train_step(states, actions, rewards, next_states, dones)
 
-    def train_short(self, state, action, reward, next_state, done):
-        self.trainer.train_step(state, action, reward, next_state, done)
-
     def get_action(self, old_state):
-        self.episilon = (EPSILON * 0.6) - self.episodes
+        self.epsilon = max(((EPSILON * 1) - self.episodes) / EPSILON, EPSILON_MIN)  # modified this to be in [0, 1]
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
-        if random.randint(0, EPSILON) < self.episilon:
+        if np.random.uniform(0, 1) < self.epsilon:
             move = random.randint(0, 3)
             action[move] = 1
         else:
@@ -78,32 +80,33 @@ def train():
     plot_mean_scores = []
     total_score = 0
     record = 0
-    steps = 0
     total_reward = 0
     agent = Agent()
     game = AsteroidsGame(True)
     game.step(action=[0, 0, 0, 0])
     print("Starting training...")
 
+    n_transitions = 0
     while agent.episodes < EPISODES:
         old_state = agent.get_state(game)
 
         next_action = agent.get_action(old_state)
 
         reward, done, score = game.step(action=next_action)
+        n_transitions += 1
         score = int(score)
+        total_reward += reward
         new_state = agent.get_state(game)
-
-        # agent.train_short(old_state, next_action, reward, new_state, done)
         agent.memorize(old_state, next_action, reward, new_state, done)
 
-        steps += 1
-        total_reward += reward
+        # train from replay memory every so often
+        if n_transitions % N_TRANSITIONS_BETWEEN_UPDATES == 0:
+            agent.train_long()
 
         if done:
             game.reset(True)
             agent.episodes += 1
-            agent.train_long()
+            print("Current epsilon: ", agent.epsilon)
 
             if score > record:
                 record = score
@@ -114,7 +117,7 @@ def train():
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
 
-            print(f"Score: {score}\n" f"Steps: {steps}\n" f"Reward: {total_reward}\n")
+            print(f"Score: {score}\n" f"Steps: {n_transitions}\n" f"Reward: {total_reward}\n")
 
             steps = 0
             total_reward = 0
