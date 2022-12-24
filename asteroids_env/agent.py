@@ -11,7 +11,7 @@ import os
 MAX_MEM = 100_000_000
 BATCH = 1000
 LR = 0.01  # Learning Rate
-EPSILON = 250
+EPSILON = 200
 EPISODES = 200
 
 file_name = "model1.pth"
@@ -43,13 +43,12 @@ class Agent:
         states, actions, rewards, next_states, dones = zip(*mini_sample)
 
         self.trainer.train_step(states, actions, rewards, next_states, dones)
-        self.model.save(file_name=file_name)
 
     def train_short(self, state, action, reward, next_state, done):
         self.trainer.train_step(state, action, reward, next_state, done)
 
     def get_action(self, old_state):
-        self.episilon = (EPSILON * 1) - self.episodes
+        self.episilon = (EPSILON * 0.6) - self.episodes
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
         if random.randint(0, EPSILON) < self.episilon:
@@ -70,12 +69,17 @@ class Agent:
             self.model.eval()
             print("Model loaded.")
 
+    def save_model(self):
+        self.model.save(file_name=file_name)
+
 
 def train():
     plot_scores = []
     plot_mean_scores = []
     total_score = 0
     record = 0
+    steps = 0
+    total_reward = 0
     agent = Agent()
     game = AsteroidsGame(True)
     game.step(action=[0, 0, 0, 0])
@@ -83,15 +87,17 @@ def train():
 
     while agent.episodes < EPISODES:
         old_state = agent.get_state(game)
-        print(old_state)
+
         next_action = agent.get_action(old_state)
 
         reward, done, score = game.step(action=next_action)
         score = int(score)
         new_state = agent.get_state(game)
 
-        agent.train_short(old_state, next_action, reward, new_state, done)
+        # agent.train_short(old_state, next_action, reward, new_state, done)
         agent.memorize(old_state, next_action, reward, new_state, done)
+
+        steps += 1
 
         if done:
             game.reset(True)
@@ -106,6 +112,11 @@ def train():
             mean_score = total_score / agent.episodes
             plot_mean_scores.append(mean_score)
             plot(plot_scores, plot_mean_scores)
+
+            print(f"Score: {score}\n" f"Steps: {steps}\n" f"Reward: {total_reward}\n")
+
+            steps = 0
+            total_reward = 0
 
 
 if __name__ == "__main__":

@@ -48,13 +48,13 @@ class AsteroidsGame:
         self.current_score = 0
         self.round_scores = []
         self.round = 1
-        self.lives = 3
+        self.lives = 0 if ai_playing is True else 3
         self.resetting = False
         self.reset_timer_default = 150
         self.reset_timer = self.reset_timer_default
         self.game_over = False
         self.draw_ship = True
-        self.round_timer_default = 7500
+        self.round_timer_default = 1650 if ai_playing is True else 5000
         self.round_timer = self.round_timer_default
         self.ufo_shoot_dict = {(1, 2, 3, 4): (150, 200), (5, 6, 7, 8): (100, 150)}
         self.ufo_shoot_timer = 200
@@ -131,11 +131,6 @@ class AsteroidsGame:
             else:
                 self.game_over = True
                 self.ship.kill()
-                print(
-                    f"Final Score: {self.get_total_score()}\n"
-                    f"Destroyed UFOs: {self.total_destroyed_ufos}\n"
-                    f"Destroyed Asteroids: {self.total_destroyed_asteroids}\n"
-                )
 
         # Gives invincibility frames
         if self.resetting:
@@ -361,13 +356,10 @@ class AsteroidsGame:
     # AI State Functions
     def get_state(self):
         return [
-            self.ship_angle() / 300,
+            self.ship.heading / 300,
             *[self.object_positions(i)[0] for i in range(ST_NUM - 1)],
             *[self.object_positions(i)[1] for i in range(ST_NUM - 1)],
         ]
-
-    def ship_angle(self):
-        return self.ship.heading
 
     def object_positions(self, index=-1):
         objs = [obj for obj in self.objects]
@@ -414,12 +406,10 @@ class AsteroidsGame:
 
         self.update()
 
-        reward = 0
+        reward = 0.1
         if int(self.get_total_score()) > score:
             reward = 10
-        if self.round_timer == 0:
-            self.game_over = True
-        if True in [self.object_positions(i)[0] < 0.6 for i in range(ST_NUM - 1)]:
+        if True in [0 < self.object_positions(i)[0] < 0.6 for i in range(ST_NUM - 1)]:
             reward -= 1
         if self.lives < lives:
             reward -= 10
