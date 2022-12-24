@@ -98,6 +98,7 @@ def train():
         agent.memorize(old_state, next_action, reward, new_state, done)
 
         steps += 1
+        total_reward += reward
 
         if done:
             game.reset(True)

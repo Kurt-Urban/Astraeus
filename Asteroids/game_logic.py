@@ -406,7 +406,9 @@ class AsteroidsGame:
 
         self.update()
 
-        reward = 0.1
+        reward = 0
+        if score > 0:
+            reward = 0.1
         if int(self.get_total_score()) > score:
             reward = 10
         if True in [0 < self.object_positions(i)[0] < 0.6 for i in range(ST_NUM - 1)]:

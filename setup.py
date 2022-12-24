@@ -7,6 +7,7 @@ setup(
     entry_points={
         "console_scripts": [
             "human = Asteroids.main:human",
+            "ai = Asteroids.main:ai",
         ],
     },
 )

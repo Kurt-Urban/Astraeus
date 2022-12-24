@@ -8,8 +8,7 @@ def human():
 
 
 def ai():
-    game = ast.AsteroidsGame(True)
-    game.ai_run()
+    pass
 
 
 if __name__ == "__main__":
