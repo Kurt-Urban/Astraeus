@@ -54,7 +54,7 @@ class AsteroidsGame:
         self.reset_timer = self.reset_timer_default
         self.game_over = False
         self.draw_ship = True
-        self.round_timer_default = 1650 if ai_playing is True else 5000
+        self.round_timer_default = 5000
         self.round_timer = self.round_timer_default
         self.ufo_shoot_dict = {(1, 2, 3, 4): (150, 200), (5, 6, 7, 8): (100, 150)}
         self.ufo_shoot_timer = 200
@@ -259,7 +259,7 @@ class AsteroidsGame:
             and len(self.asteroids_group) != 0
             and not self.game_over
         ):
-            self.round_timer -= 1
+            self.round_timer -= 3 if self.ai_playing is True else 1
 
         self.current_score = (
             self.destroyed_asteroids * float(f"1.{self.round_timer}") * 10
@@ -356,9 +356,10 @@ class AsteroidsGame:
     # AI State Functions
     def get_state(self):
         return [
-            self.ship.heading / 300,
-            *[self.object_positions(i)[0] for i in range(ST_NUM - 1)],
-            *[self.object_positions(i)[1] for i in range(ST_NUM - 1)],
+            self.ship.heading / 360,
+            self.ship.speed / 4,
+            *[self.object_positions(i)[0] for i in range(ST_NUM)],
+            *[self.object_positions(i)[1] for i in range(ST_NUM)],
         ]
 
     def object_positions(self, index=-1):
@@ -369,8 +370,8 @@ class AsteroidsGame:
 
         obj_list = [
             (
-                pygame.math.Vector2.distance_to(self.ship.position, obj.position) / 200,
-                get_target_direction(self.ship.position, obj.position) / 300,
+                pygame.math.Vector2.distance_to(self.ship.position, obj.position) / 400,
+                get_target_direction(self.ship.position, obj.position) / 360,
             )
             for obj in objs
         ]
@@ -392,7 +393,6 @@ class AsteroidsGame:
     # AI Action Functions
     def step(self, action):
         score = int(self.get_total_score())
-        lives = self.lives
 
         if action[0] == 1:
             self.ship.forward()
@@ -410,13 +410,11 @@ class AsteroidsGame:
         if score > 0:
             reward = 0.1
         if int(self.get_total_score()) > score:
-            reward = 10
-        if True in [0 < self.object_positions(i)[0] < 0.6 for i in range(ST_NUM - 1)]:
+            reward += 10
+        if True in [0 < self.object_positions(i)[0] < 0.3 for i in range(ST_NUM - 1)]:
             reward -= 1
-        if self.lives < lives:
-            reward -= 10
         if self.game_over:
-            reward -= 10
+            reward = -10
 
         done = self.game_over
 
