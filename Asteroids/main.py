@@ -12,4 +12,7 @@ def ai():
 
 
 if __name__ == "__main__":
-    globals()[sys.argv[1]]()
+    if len(sys.argv) == 1:
+        human()
+    else:
+        globals()[sys.argv[1]]()

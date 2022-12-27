@@ -5,12 +5,11 @@ from collections import deque
 from Asteroids.game_logic import AsteroidsGame
 from model import Linear_QNet, QTrainer
 from utils import plot
-import time
 import os
 
-MAX_MEM = 100_000_000
+MAX_MEM = 1_000_000_000
 BATCH = 1000
-LR = 0.01
+LR = 0.001
 GAMMA = 0.99
 EPSILON = 100
 EPISODES = 1000
@@ -30,7 +29,7 @@ class Agent:
         self.epsilon = 0  # Exploration
         self.gamma = 0.9  # Discount
         self.memory = deque(maxlen=MAX_MEM)
-        self.model = Linear_QNet(22, 256, 4)
+        self.model = Linear_QNet(10, 256, 4)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
         # self.load_model()  # I wouldn't load completely overfit models from previous runs that didnt work!
 
@@ -87,11 +86,22 @@ def train():
     agent = Agent()
     game = AsteroidsGame(True)
     game.step(action=[0, 0, 0, 0])
+    state_stack = list()
     print("Starting training...")
+
+    def update_state_stack():
+        state_stack.append(agent.get_state(game))
+        state_stack.pop(0)
 
     steps = 0
     while agent.episodes <= EPISODES:
-        old_state = agent.get_state(game)
+        if agent.episodes == 1:
+            for _ in range(3):
+                state_stack.append(agent.get_state(game))
+        else:
+            update_state_stack()
+
+        old_state = state_stack
 
         next_action = agent.get_action(old_state)
 
@@ -99,7 +109,8 @@ def train():
         steps += 1
         score = int(score)
         total_reward += reward
-        new_state = agent.get_state(game)
+        update_state_stack()
+        new_state = state_stack
         agent.memorize(old_state, next_action, reward, new_state, done)
 
         # train from replay memory every so often
@@ -120,17 +131,15 @@ def train():
             plot(plot_scores, plot_mean_scores)
 
             print(
+                f"Episode: {agent.episodes}\n"
                 f"Score: {score}\n"
                 f"Steps: {steps}\n"
                 f"Reward: {total_reward}\n"
-                f"Episode: {agent.episodes}\n"
+                f"Mean: {plot_mean_scores[-1]}\n"
             )
 
             steps = 0
             total_reward = 0
-
-    if agent.episodes == EPISODES:
-        print(f"Mean: {plot_mean_scores.pop()}\n")
 
 
 if __name__ == "__main__":

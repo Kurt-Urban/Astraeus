@@ -39,6 +39,7 @@ class Asteroid(pygame.sprite.Sprite):
         self.velocity = pygame.math.Vector2(self.speed, 0)
         self.position = pygame.math.Vector2(x, y)
         self.rotation_speed = random.randint(-3, 3)
+        self.mask = pygame.mask.from_surface(self.image)
 
     def update(self):
         movement(self)

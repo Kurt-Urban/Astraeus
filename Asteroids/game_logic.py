@@ -8,6 +8,7 @@ from .utils.object_functions import get_dict_value, get_target_direction
 from .objects.ship import Ship
 from .objects.ufo import UFO
 from .objects.asteroid import Asteroid
+from .objects.whisker import Whisker
 
 ST_NUM = 10
 
@@ -30,6 +31,12 @@ class AsteroidsGame:
         self.ship_group = pygame.sprite.Group()
         self.ship_group.add(ship)
         self.ship = self.ship_group.sprites()[0]
+
+        # Initialize Whiskers
+        if ai_playing is True:
+            self.whisker_group = pygame.sprite.Group()
+            for i in range(8):
+                self.whisker_group.add(Whisker(self.ship, i))
 
         # Initialize Projectile Group
         self.projectile_group = pygame.sprite.Group()
@@ -106,7 +113,8 @@ class AsteroidsGame:
                 self.objects.extend(self.ufo_group.sprites())
 
             if self.ai_playing:
-                self.draw_target_lines()
+                self.whisker_group.update()
+                self.whisker_group.draw(self.screen)
 
         # Event handling
         for event in pygame.event.get():
@@ -291,48 +299,6 @@ class AsteroidsGame:
         if pygame.key.get_pressed()[pygame.K_SPACE]:
             self.reset(False)
 
-    # AI Functions
-    def get_asteroid_positions(self):
-        return [asteroid.position for asteroid in self.asteroids_group]
-
-    def get_ufo_positions(self):
-        return [ufo.position for ufo in self.ufo_group]
-
-    def get_ship_position(self):
-        return self.ship.position
-
-    def get_ship_angle(self):
-        return self.ship.angle
-
-    def get_near_objects(self):
-        return [
-            obj
-            for obj in self.objects
-            if pygame.math.Vector2.distance_to(self.ship.position, obj.position) < 300
-        ]
-
-    def get_target(self):
-        return min(
-            self.objects,
-            key=lambda obj: pygame.math.Vector2.distance_to(
-                self.ship.position, obj.position
-            ),
-        )
-
-    def get_next_target(self):
-        objs = self.objects.copy().remove(self.get_target())
-        if objs is None:
-            return self.get_target()
-        return min(
-            objs,
-            key=lambda obj: pygame.math.Vector2.distance_to(
-                self.ship.position, obj.position
-            ),
-        )
-
-    def near_objects(self):
-        return len(self.get_near_objects())
-
     def draw_target_lines(self):
         objs = [obj for obj in self.objects]
         objs_list = [
@@ -358,8 +324,7 @@ class AsteroidsGame:
         return [
             self.ship.heading / 360,
             self.ship.speed / 4,
-            *[self.object_positions(i)[0] for i in range(ST_NUM)],
-            *[self.object_positions(i)[1] for i in range(ST_NUM)],
+            *self.get_whisker_dist(),
         ]
 
     def object_positions(self, index=-1):
@@ -392,7 +357,7 @@ class AsteroidsGame:
 
     # AI Action Functions
     def step(self, action):
-        score = int(self.get_total_score())
+        score = self.total_destroyed_asteroids + self.total_destroyed_ufos
 
         if action[0] == 1:
             self.ship.forward()
@@ -408,14 +373,25 @@ class AsteroidsGame:
 
         reward = 0
         if score > 0:
-            reward = 0.1
-        if int(self.get_total_score()) > score:
+            reward = 1
+        if self.total_destroyed_asteroids + self.total_destroyed_ufos > score:
             reward += 10
-        if True in [0 < self.object_positions(i)[0] < 0.3 for i in range(ST_NUM - 1)]:
-            reward -= 1
         if self.game_over:
             reward = -10
 
         done = self.game_over
 
         return reward, done, score
+
+    def get_whisker_dist(self):
+        whisker_states = [0 for _ in range(8)]
+        for whisker in self.whisker_group:
+            for obj in self.objects:
+                if pygame.sprite.collide_mask(whisker, obj):
+                    whisker_states[whisker.index] = (
+                        pygame.math.Vector2.distance_to(
+                            self.ship.position, obj.position
+                        )
+                        - 60
+                    ) / whisker.length
+        return whisker_states
