@@ -25,6 +25,8 @@ class AsteroidsGame:
         self.font = pygame.font.SysFont("Bauhaus 93", 40)
         self.font_color = (255, 255, 255)  # White
         self.ai_playing = ai_playing
+        self.total_whiskers = 16
+        whisker_length = 300
 
         # Initialize Ship
         ship = Ship(400, self.screen, ai_playing=ai_playing)
@@ -35,8 +37,11 @@ class AsteroidsGame:
         # Initialize Whiskers
         if ai_playing is True:
             self.whisker_group = pygame.sprite.Group()
-            for i in range(8):
-                self.whisker_group.add(Whisker(self.ship, i))
+
+            for i in range(self.total_whiskers):
+                self.whisker_group.add(
+                    Whisker(self.ship, whisker_length, i, self.total_whiskers)
+                )
 
         # Initialize Projectile Group
         self.projectile_group = pygame.sprite.Group()
@@ -267,7 +272,7 @@ class AsteroidsGame:
             and len(self.asteroids_group) != 0
             and not self.game_over
         ):
-            self.round_timer -= 3 if self.ai_playing is True else 1
+            self.round_timer -= 1
 
         self.current_score = (
             self.destroyed_asteroids * float(f"1.{self.round_timer}") * 10
@@ -384,7 +389,7 @@ class AsteroidsGame:
         return reward, done, score
 
     def get_whisker_dist(self):
-        whisker_states = [0 for _ in range(8)]
+        whisker_states = [0 for _ in range(self.total_whiskers)]
         for whisker in self.whisker_group:
             for obj in self.objects:
                 if pygame.sprite.collide_mask(whisker, obj):
