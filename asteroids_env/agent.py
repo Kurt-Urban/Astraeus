@@ -7,17 +7,14 @@ from model import Linear_QNet, QTrainer
 from utils import plot
 import os
 
-MAX_MEM = 1_000_000_000
-BATCH = 1000
-LR = 0.0001
-TAU = 0.005
+MAX_MEM = 1_000_000
+BATCH = 5000
+LR = 0.001
 GAMMA = 0.99
 EPSILON = 100
 EPISODES = 1000
 EPSILON_MIN = 0.05
-N_TRANSITIONS_BETWEEN_UPDATES = (
-    32  # introduced this to make periodic updates sampled from replay memory
-)
+N_TRANSITIONS_BETWEEN_UPDATES = 64
 
 
 file_name = "model1.pth"
@@ -51,9 +48,7 @@ class Agent:
         self.trainer.train_step(states, actions, rewards, next_states, dones)
 
     def get_action(self, old_state):
-        self.epsilon = max(
-            (EPSILON - self.episodes) / EPSILON, EPSILON_MIN
-        )  # modified this to be in [0, 1]
+        self.epsilon = max((EPSILON - self.episodes) / EPSILON, EPSILON_MIN)
         # [fwd,left,right,shoot]
         action = [0, 0, 0, 0]
         if np.random.uniform(0, 1) < self.epsilon:
@@ -87,22 +82,10 @@ def train():
     agent = Agent()
     game = AsteroidsGame(True)
     game.step(action=[0, 0, 0, 0])
-    # state_stack = list()
     print("Starting training...")
-
-    # def update_state_stack():
-    #     state_stack.append(agent.get_state(game))
-    #     state_stack.pop(0)
 
     steps = 0
     while agent.episodes <= EPISODES:
-        # if agent.episodes == 1:
-        #     for _ in range(3):
-        #         state_stack.append(agent.get_state(game))
-        # else:
-        #     update_state_stack()
-
-        # old_state = state_stack
 
         old_state = agent.get_state(game)
 
@@ -112,12 +95,9 @@ def train():
         steps += 1
         score = int(score)
         total_reward += reward
-        # update_state_stack()
-        # new_state = state_stack
         new_state = agent.get_state(game)
         agent.memorize(old_state, next_action, reward, new_state, done)
 
-        # train from replay memory every so often
         if steps % N_TRANSITIONS_BETWEEN_UPDATES == 0:
             agent.train_long()
 
