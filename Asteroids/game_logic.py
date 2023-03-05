@@ -10,7 +10,7 @@ from .objects.ufo import UFO
 from .objects.asteroid import Asteroid
 from .objects.whisker import Whisker
 
-ST_NUM = 10
+ST_NUM = 8
 
 
 class AsteroidsGame:
@@ -35,13 +35,13 @@ class AsteroidsGame:
         self.ship = self.ship_group.sprites()[0]
 
         # Initialize Whiskers
-        if ai_playing is True:
-            self.whisker_group = pygame.sprite.Group()
+        # if ai_playing is True:
+        #     self.whisker_group = pygame.sprite.Group()
 
-            for i in range(self.total_whiskers):
-                self.whisker_group.add(
-                    Whisker(self.ship, whisker_length, i, self.total_whiskers)
-                )
+        #     for i in range(self.total_whiskers):
+        #         self.whisker_group.add(
+        #             Whisker(self.ship, whisker_length, i, self.total_whiskers)
+        #         )
 
         # Initialize Projectile Group
         self.projectile_group = pygame.sprite.Group()
@@ -118,8 +118,9 @@ class AsteroidsGame:
                 self.objects.extend(self.ufo_group.sprites())
 
             if self.ai_playing:
-                self.whisker_group.update()
-                self.whisker_group.draw(self.screen)
+                # self.whisker_group.update()
+                # self.whisker_group.draw(self.screen)
+                self.draw_target_lines()
                 self.aiming_at_target()
 
         # Event handling
@@ -328,34 +329,41 @@ class AsteroidsGame:
     # AI State Functions
     def get_state(self):
         return [
-            self.ship.heading / 360,
+            self.ship.position[0] / 800,
+            self.ship.position[1] / 800,
+            (self.ship.heading if self.ship.heading > 0 else 360 + self.ship.heading)
+            / 360,
             self.ship.speed / 4,
             self.aiming_at_target(),
-            *self.get_whisker_dist(),
+            # *self.get_whisker_dist(),
+            *[self.object_positions(i)[0] for i in range(ST_NUM)],
+            *[self.object_positions(i)[1] for i in range(ST_NUM)],
+            self.object_positions(0)[2] / 1132,  # Max distance between two points
         ]
 
     def object_positions(self, index=-1):
         objs = [obj for obj in self.objects]
 
         if objs is None or len(objs) == 0:
-            return [(0, 0) for _ in range(ST_NUM - 1)]
+            return [(0, 0, 0) for _ in range(ST_NUM - 1)]
 
         obj_list = [
             (
-                pygame.math.Vector2.distance_to(self.ship.position, obj.position) / 400,
-                get_target_direction(self.ship.position, obj.position) / 360,
+                obj.position[0] / 800,
+                obj.position[1] / 800,
+                pygame.math.Vector2.distance_to(self.ship.position, obj.position),
             )
             for obj in objs
         ]
 
-        obj_list.sort(key=lambda x: x[0])
+        obj_list.sort(key=lambda x: x[2])
 
         def append_obj(num):
             for _ in range(num):
                 obj_list.append((0, 0))
 
         if len(obj_list) < ST_NUM:
-            append_obj(10 - len(obj_list))
+            append_obj(ST_NUM - len(obj_list))
 
         if index == -1:
             return obj_list
@@ -372,7 +380,7 @@ class AsteroidsGame:
             self.ship.rotate(-self.ship.rotate_speed)
         if action[2] == 1:
             self.ship.rotate(self.ship.rotate_speed)
-        if action[3] == 1 and self.ship_shoot_timer == 0:
+        if self.ship_shoot_timer == 0:
             self.projectile_group.add(self.ship.shoot())
             self.ship_shoot_timer = 30
 
@@ -381,11 +389,13 @@ class AsteroidsGame:
         reward = 1
 
         if self.total_destroyed_asteroids + self.total_destroyed_ufos > score:
-            reward += 10
+            reward += 5
         if self.game_over:
             reward = -10
         if self.aiming_at_target():
-            reward += 0.5
+            reward += 1
+        if self.object_positions(0)[2] / 1132 < 0.09:
+            reward -= 2
 
         done = self.game_over
 

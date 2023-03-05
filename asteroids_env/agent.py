@@ -8,7 +8,7 @@ from utils import plot
 import os
 
 MAX_MEM = 1_000_000
-BATCH = 5000
+BATCH = 10000
 LR = 0.001
 GAMMA = 0.99
 EPSILON = 100
@@ -27,7 +27,7 @@ class Agent:
         self.epsilon = 0  # Exploration
         self.gamma = GAMMA  # Discount
         self.memory = deque(maxlen=MAX_MEM)
-        self.model = Linear_QNet(19, 256, 4)
+        self.model = Linear_QNet(22, 256, 3)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
 
     def get_state(self, game):
@@ -48,10 +48,10 @@ class Agent:
 
     def get_action(self, old_state):
         self.epsilon = max((EPSILON - self.episodes) / EPSILON, EPSILON_MIN)
-        # [fwd,left,right,shoot]
-        action = [0, 0, 0, 0]
+        # [fwd,left,right]
+        action = [0, 0, 0]
         if np.random.uniform(0, 1) < self.epsilon:
-            move = random.randint(0, 3)
+            move = random.randint(0, 2)
             action[move] = 1
         else:
             state0 = torch.tensor(old_state, dtype=torch.float)
