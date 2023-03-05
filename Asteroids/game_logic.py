@@ -120,6 +120,7 @@ class AsteroidsGame:
             if self.ai_playing:
                 self.whisker_group.update()
                 self.whisker_group.draw(self.screen)
+                self.aiming_at_target()
 
         # Event handling
         for event in pygame.event.get():
@@ -329,6 +330,7 @@ class AsteroidsGame:
         return [
             self.ship.heading / 360,
             self.ship.speed / 4,
+            self.aiming_at_target(),
             *self.get_whisker_dist(),
         ]
 
@@ -376,13 +378,14 @@ class AsteroidsGame:
 
         self.update()
 
-        reward = 0
-        if score > 0:
-            reward = 1
+        reward = 1
+
         if self.total_destroyed_asteroids + self.total_destroyed_ufos > score:
             reward += 10
         if self.game_over:
             reward = -10
+        if self.aiming_at_target():
+            reward += 0.5
 
         done = self.game_over
 
@@ -400,3 +403,20 @@ class AsteroidsGame:
                         - 60
                     ) / whisker.length
         return whisker_states
+
+    def aiming_at_target(self):
+        ship_angle = (
+            (self.ship.heading if self.ship.heading > 0 else 360 + self.ship.heading)
+            - 180
+            if self.ship.heading >= 180
+            else 180 + self.ship.heading
+        )
+        for obj in self.objects:
+            obj_angle = (
+                get_target_direction(self.ship.position, obj.position)
+                if get_target_direction(self.ship.position, obj.position) > 0
+                else 360 + get_target_direction(self.ship.position, obj.position)
+            )
+            if abs(ship_angle - obj_angle) < 10:
+                return 1
+        return 0

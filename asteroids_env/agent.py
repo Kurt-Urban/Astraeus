@@ -27,9 +27,8 @@ class Agent:
         self.epsilon = 0  # Exploration
         self.gamma = GAMMA  # Discount
         self.memory = deque(maxlen=MAX_MEM)
-        self.model = Linear_QNet(18, 256, 4)
+        self.model = Linear_QNet(19, 256, 4)
         self.trainer = QTrainer(self.model, lr=LR, gamma=self.gamma)
-        # self.load_model()
 
     def get_state(self, game):
         return game.get_state()
